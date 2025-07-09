@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Carousel {
+  id    Int    @id @default(autoincrement())
+  image String
+}
+
+model Stat {
+  id              Int      @id @default(autoincrement())
+  years           Int
+  placements      Int
+  services        Int
+  countriesServed Int
+  team            Int
+  database        Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Service {
+  id          Int    @id @default(autoincrement())
+  image       String
+  serviceType String
+}
+
+model Partner {
+  id    Int    @id @default(autoincrement())
+  image String
+}
+
+model Team {
+  id         Int      @id @default(autoincrement())
+  name       String
+  address    String
+  role       String
+  title      String
+  linkedin   String
+  email      String
+  link       String
+  profileImg String
+  createdAt  DateTime @default(now())
+}
+
+model Testimonial {
+  id        Int      @id @default(autoincrement())
+  logo      String
+  title     String
+  subtitle  String
+  content String
+  
+  createdAt DateTime @default(now())
+}
+
+model Blog {
+  id           Int      @id @default(autoincrement())
+  thumbnailImg String
+  title        String
+  createdAt    DateTime @default(now())
+  content      String
+}
+
+model Career {
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String
+  phoneNumber String
+  resume      String // Could be a file link (URL)
+  createdAt   DateTime @default(now())
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  phone    String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
