@@ -1,15 +1,16 @@
 
 import express, { Request, Response, NextFunction } from 'express';
-
+import { landingController } from '../controller/landing.controller';
+import upload from '../config/multer';
 
 const app=express();
 
 
 
 // To get the homepage banner image
-app.get("/carousel")
+app.get("/carousel",upload.array("image")  ,landingController.getCarousel)
 // To create or update the homepage banner image
-app.patch("/carousel")
+app.patch("/carousel",landingController.createCarousel)
 
 
 // To get the stat in landing page
