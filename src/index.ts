@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import landingRouter from './routes/landing.route';
 
 // Load environment variables
 dotenv.config();
@@ -30,6 +31,9 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+//Landing Routes
+app.use("/api", landingRouter); 
+ 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'healthy',
@@ -38,30 +42,7 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Example API routes
-app.get('/api/users', (req: Request, res: Response) => {
-  res.json({
-    users: [
-      { id: 1, name: 'John Doe', email: 'john@example.com' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-    ]
-  });
-});
-
-app.post('/api/users', (req: Request, res: Response) => {
-  const { name, email } = req.body;
-  
-  if (!name || !email) {
-    return res.status(400).json({
-      error: 'Name and email are required'
-    });
-  }
-  
- return res.status(201).json({
-    message: 'User created successfully',
-    user: { id: Date.now(), name, email }
-  });
-});
+ 
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
