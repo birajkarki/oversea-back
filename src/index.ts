@@ -32,7 +32,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 //Landing Routes
-app.use("/api", landingRouter); 
+app.use("/api/landing", landingRouter); 
  
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
