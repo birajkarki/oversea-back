@@ -30,6 +30,9 @@ app.post("/team", upload.array("image"), landingController.postTeam);
 app.patch("/team/:id", upload.array("image"), landingController.patchTeam);
 app.delete("/team/:id", landingController.deleteTeam);
 
+
+
+
 // To get blogs
 app.get("/testimonials", landingController.getTestimonials);
 app.post(
@@ -54,7 +57,7 @@ app.delete("/blog/:id", landingController.deleteBlog);
 
 
 app.get("/careers", landingController.getCareers);
-app.post("/career", landingController.createCareer);
+app.post("/career", upload.array("resume"), landingController.createCareer);
 
 
 app.get("/feedbacks", landingController.getFeedbacks);

@@ -288,8 +288,7 @@ class LandingController {
     }
   };
 
-
-   getOverview = async (req: Request, res: Response) => {
+  getOverview = async (req: Request, res: Response) => {
     try {
       const overview = await landingService.getOverviewStats();
       return res.json(overview);
@@ -298,245 +297,274 @@ class LandingController {
     }
   };
 
-
   //testimonial
 
   async getTestimonials(req: Request, res: Response) {
-  try {
-    const data = await landingService.getTestimonials();
-    return res.json(data).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
+    try {
+      const data = await landingService.getTestimonials();
+      return res.json(data).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
-}
 
-async createTestimonial(req: Request & any, res: Response) {
-  try {
-    const files = req.files;
-    const uploadedUrls: string[] = [];
+  async createTestimonial(req: Request & any, res: Response) {
+    try {
+      const files = req.files;
+      const uploadedUrls: string[] = [];
 
-    if (files && Array.isArray(files)) {
-      for (const file of files) {
+      if (files && Array.isArray(files)) {
+        for (const file of files) {
+          try {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "testimonial",
+            });
+            uploadedUrls.push(result.secure_url);
+          } catch (err) {
+            console.error("Error uploading image:", err);
+            return res.status(500).json({ message: "Image upload failed" });
+          }
+        }
+      }
+
+      const logo = uploadedUrls[0];
+      if (!logo) return res.status(400).json({ message: "No image uploaded" });
+
+      const { title, subtitle, content } = req.body;
+      const data = await landingService.createTestimonial({
+        logo,
+        title,
+        subtitle,
+        content,
+      });
+
+      return res.json(data).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+
+  async updateTestimonial(req: Request & any, res: Response) {
+    try {
+      const { id } = req.params;
+      const { title, subtitle, content } = req.body;
+
+      let logo = req.body.logo; // fallback to existing if no new image
+
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
         try {
-          const result = await cloudinary.uploader.upload(file.path, {
+          const uploaded = await cloudinary.uploader.upload(req.files[0].path, {
             folder: "testimonial",
           });
-          uploadedUrls.push(result.secure_url);
+          logo = uploaded.secure_url;
         } catch (err) {
-          console.error("Error uploading image:", err);
-          return res.status(500).json({ message: "Image upload failed" });
+          console.error("Image upload error:", err);
+          return res.status(500).json({ message: "Error uploading logo" });
         }
       }
+
+      const updated = await landingService.updateTestimonial(Number(id), {
+        logo,
+        title,
+        subtitle,
+        content,
+      });
+
+      return res.json(updated).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
     }
-
-    const logo = uploadedUrls[0];
-    if (!logo) return res.status(400).json({ message: "No image uploaded" });
-
-    const { title, subtitle, content } = req.body;
-    const data = await landingService.createTestimonial({ logo, title, subtitle, content });
-
-    return res.json(data).status(201);
-  } catch (error) {
-    console.log(error);
-    return;
   }
-}
 
+  async deleteTestimonial(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const deleted = await landingService.deleteTestimonial(Number(id));
+      return res.json(deleted).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 
-async updateTestimonial(req: Request & any, res: Response) {
-  try {
-    const { id } = req.params;
-    const { title, subtitle, content } = req.body;
+  //blog
 
-    let logo = req.body.logo; // fallback to existing if no new image
+  async getBlogs(req: Request, res: Response) {
+    try {
+      const data = await landingService.getBlogs();
+      return res.json(data).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 
-    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      try {
-        const uploaded = await cloudinary.uploader.upload(req.files[0].path, {
-          folder: "testimonial",
-        });
-        logo = uploaded.secure_url;
-      } catch (err) {
-        console.error("Image upload error:", err);
-        return res.status(500).json({ message: "Error uploading logo" });
+  async getBlogById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const blog = await landingService.getBlogById(Number(id));
+      return res.json(blog).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+
+  async createBlog(req: Request & any, res: Response) {
+    try {
+      const files = req.files;
+      const uploadedUrls: string[] = [];
+
+      if (files && Array.isArray(files)) {
+        for (const file of files) {
+          try {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "blog",
+            });
+            uploadedUrls.push(result.secure_url);
+          } catch (err) {
+            console.error("Error uploading image:", err);
+            return res.status(500).json({ message: "Image upload failed" });
+          }
+        }
       }
+
+      const thumbnailImg = uploadedUrls[0];
+      if (!thumbnailImg)
+        return res.status(400).json({ message: "No thumbnail uploaded" });
+
+      const { title, content } = req.body;
+      const blog = await landingService.createBlog({
+        thumbnailImg,
+        title,
+        content,
+      });
+
+      return res.json(blog).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
     }
-
-    const updated = await landingService.updateTestimonial(Number(id), {
-      logo,
-      title,
-      subtitle,
-      content,
-    });
-
-    return res.json(updated).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
   }
-}
 
+  async updateBlog(req: Request & any, res: Response) {
+    try {
+      const { id } = req.params;
+      const { title, content } = req.body;
 
-async deleteTestimonial(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const deleted = await landingService.deleteTestimonial(Number(id));
-    return res.json(deleted).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
+      let thumbnailImg = req.body.thumbnailImg; // fallback to existing
 
-
-//blog
-
-async getBlogs(req: Request, res: Response) {
-  try {
-    const data = await landingService.getBlogs();
-    return res.json(data).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
-
-async getBlogById(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const blog = await landingService.getBlogById(Number(id));
-    return res.json(blog).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
-
-async createBlog(req: Request & any, res: Response) {
-  try {
-    const files = req.files;
-    const uploadedUrls: string[] = [];
-
-    if (files && Array.isArray(files)) {
-      for (const file of files) {
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
         try {
-          const result = await cloudinary.uploader.upload(file.path, {
+          const uploaded = await cloudinary.uploader.upload(req.files[0].path, {
             folder: "blog",
           });
-          uploadedUrls.push(result.secure_url);
+          thumbnailImg = uploaded.secure_url;
         } catch (err) {
-          console.error("Error uploading image:", err);
-          return res.status(500).json({ message: "Image upload failed" });
+          console.error("Image upload error:", err);
+          return res.status(500).json({ message: "Error uploading thumbnail" });
         }
       }
+
+      const updated = await landingService.updateBlog(Number(id), {
+        thumbnailImg,
+        title,
+        content,
+      });
+
+      return res.json(updated).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
     }
-
-    const thumbnailImg = uploadedUrls[0];
-    if (!thumbnailImg) return res.status(400).json({ message: "No thumbnail uploaded" });
-
-    const { title, content } = req.body;
-    const blog = await landingService.createBlog({ thumbnailImg, title, content });
-
-    return res.json(blog).status(201);
-  } catch (error) {
-    console.log(error);
-    return;
   }
-}
 
+  async deleteBlog(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const deleted = await landingService.deleteBlog(Number(id));
+      return res.json(deleted).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 
-async updateBlog(req: Request & any, res: Response) {
-  try {
-    const { id } = req.params;
-    const { title, content } = req.body;
+  //career
+  async getCareers(req: Request, res: Response) {
+    try {
+      const data = await landingService.getCareers();
+      return res.json(data).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 
-    let thumbnailImg = req.body.thumbnailImg; // fallback to existing
+  async createCareer(req: Request, res: Response) {
+    try {
+      const { name, email, phoneNumber } = req.body;
+      const files = req.files;
+      const uploadedUrls: string[] = [];
 
-    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      try {
-        const uploaded = await cloudinary.uploader.upload(req.files[0].path, {
-          folder: "blog",
-        });
-        thumbnailImg = uploaded.secure_url;
-      } catch (err) {
-        console.error("Image upload error:", err);
-        return res.status(500).json({ message: "Error uploading thumbnail" });
+      if (files && Array.isArray(files)) {
+        for (const file of files) {
+          try {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "career",
+            });
+            uploadedUrls.push(result.secure_url);
+          } catch (err) {
+            console.error("Error uploading resume:", err);
+            return res.status(500).json({ message: "Resume upload failed" });
+          }
+        }
       }
+      if (uploadedUrls[0] == undefined) {
+        return res.status(500).json({ message: "Resume upload failed" });
+      }
+      const created = await landingService.createCareer({
+        name,
+        email,
+        phoneNumber,
+        resume: uploadedUrls[0],
+      });
+      return res.json(created).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
     }
-
-    const updated = await landingService.updateBlog(Number(id), {
-      thumbnailImg,
-      title,
-      content,
-    });
-
-    return res.json(updated).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
   }
-}
 
-
-async deleteBlog(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const deleted = await landingService.deleteBlog(Number(id));
-    return res.json(deleted).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
+  //feedback
+  async getFeedbacks(req: Request, res: Response) {
+    try {
+      const data = await landingService.getFeedbacks();
+      return res.json(data).status(200);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
-}
 
-//career
-async getCareers(req: Request, res: Response) {
-  try {
-    const data = await landingService.getCareers();
-    return res.json(data).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
+  async createFeedback(req: Request, res: Response) {
+    try {
+      const { fullName, phone, email, message } = req.body;
+      const created = await landingService.createFeedback({
+        fullName,
+        phone,
+        email,
+        message,
+      });
+      return res.json(created).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
-}
-
-async createCareer(req: Request, res: Response) {
-  try {
-    const { name, email, phoneNumber, resume } = req.body;
-    const created = await landingService.createCareer({ name, email, phoneNumber, resume });
-    return res.json(created).status(201);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
-
-//feedback
-async getFeedbacks(req: Request, res: Response) {
-  try {
-    const data = await landingService.getFeedbacks();
-    return res.json(data).status(200);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
-
-async createFeedback(req: Request, res: Response) {
-  try {
-    const { fullName, phone, email, message } = req.body;
-    const created = await landingService.createFeedback({ fullName, phone, email, message });
-    return res.json(created).status(201);
-  } catch (error) {
-    console.log(error);
-    return;
-  }
-}
-
-
-
-
 }
 
 export const landingController = new LandingController();
