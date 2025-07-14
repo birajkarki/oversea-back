@@ -504,41 +504,49 @@ class LandingController {
     }
   }
 
-  async createCareer(req: Request, res: Response) {
+async createCareer(req: Request, res: Response) {
     try {
       const { name, email, phoneNumber } = req.body;
       const files = req.files;
-      const uploadedUrls: string[] = [];
 
-      if (files && Array.isArray(files)) {
-        for (const file of files) {
-          try {
-            const result = await cloudinary.uploader.upload(file.path, {
-              folder: "career",
-            });
-            uploadedUrls.push(result.secure_url);
-          } catch (err) {
-            console.error("Error uploading resume:", err);
-            return res.status(500).json({ message: "Resume upload failed" });
-          }
-        }
+      console.log("Request body:", req.body);
+      console.log("Files received:", files);
+
+      // Check if files exist
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ message: "Resume file is required" });
       }
-      if (uploadedUrls[0] == undefined) {
+
+      const resumeFile = files[0];
+      console.log("Resume file details:", {
+        fieldname: resumeFile?.fieldname,
+        originalname: resumeFile?.originalname,
+        mimetype: resumeFile?.mimetype,
+        size: resumeFile?.size,
+        path: resumeFile?.path,
+        filename: resumeFile?.filename
+      });
+
+      // Check if the file was successfully uploaded to Cloudinary
+      if (!resumeFile?.path) {
+        console.error("No path found in uploaded file");
         return res.status(500).json({ message: "Resume upload failed" });
       }
+
       const created = await landingService.createCareer({
         name,
         email,
         phoneNumber,
-        resume: uploadedUrls[0],
+        resume: resumeFile.path,
       });
-      return res.json(created).status(201);
-    } catch (error) {
-      console.log(error);
-      return;
-    }
-  }
 
+      console.log("Career created successfully:", created);
+      return res.status(201).json(created);
+    } catch (error) {
+      console.error("Error in createCareer:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+}
   //feedback
   async getFeedbacks(req: Request, res: Response) {
     try {
