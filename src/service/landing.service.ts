@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils/prisma";
+import { sendEmail } from "../utils/email";
 
 class LandingService {
   constructor() {}
@@ -262,7 +263,7 @@ async createFeedback(data: {
   email: string;
   message: string;
 }) {
-  return await prisma.feedback.create({ data });
+  return sendEmail(data.email,"Feedback",data.message)
 }
 
 
