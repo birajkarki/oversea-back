@@ -18,7 +18,7 @@ class LandingService {
   }
 
   async getCarousel() {
-    const carousel = await prisma.carousel.findFirst();
+    const carousel = await prisma.carousel.findMany();
     return carousel;
   }
 
@@ -62,12 +62,21 @@ const sanitizedData = {
   return await prisma.service.findMany();
 };
 
- createService = async (data: {
+createService = async (data: {
   image: string;
+  image2: string;
   serviceType: string;
+  heading: string;
+  subheading: string;
+  feature: string[];
+  benefit: Array<{ title: string; subtitle: string }>;
+  specialization: Array<{ heading: string; subheading: string; miniImage: string }>;
 }) => {
-  return await prisma.service.create({ data });
+  return await prisma.service.create({
+    data,
+  });
 };
+
 
  deleteService = async (id: number) => {
   return await prisma.service.delete({ where: { id } });
@@ -264,6 +273,30 @@ async createFeedback(data: {
   message: string;
 }) {
   return sendEmail(data.email,"Feedback",data.message)
+}
+
+async login(data: {
+ 
+  email: string;
+  password: string;
+}) {
+  return await prisma.user.findFirst({where:{email:data.email}})
+}
+
+
+
+async register(data: {
+  name: string;
+  
+  email: string;
+  password: string;
+}) {
+  return await prisma.user.create({data:{
+    email:data.email,
+    password:data.password,
+    role:'ADMIN',
+    name:data.name
+  }})
 }
 
 

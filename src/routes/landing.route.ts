@@ -16,7 +16,12 @@ app.patch("/stat", landingController.patchStat);
 
 // TO get service image
 app.get("/service", landingController.getServices);
-app.patch("/service", upload.array("image"), landingController.patchService);
+app.patch("/service", upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "image2", maxCount: 1 },
+    { name: "miniImage",maxCount:10 } 
+  ]), landingController.createService);
+
 app.delete("/service/:id", landingController.deleteService);
 
 // To get partner logos
@@ -30,6 +35,10 @@ app.post("/team", upload.array("image"), landingController.postTeam);
 app.patch("/team/:id", upload.array("image"), landingController.patchTeam);
 app.delete("/team/:id", landingController.deleteTeam);
 
+//login
+
+app.post('/login',landingController.login)
+app.post('/register',landingController.register)
 
 
 

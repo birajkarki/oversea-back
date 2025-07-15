@@ -72,39 +72,199 @@ class LandingController {
     }
   };
 
-  patchService = async (req: Request, res: Response) => {
+ createService = async (req:Request, res:Response) => {
     try {
-      const { serviceType } = req.body;
-      const images = req.files;
-      const uploadResponses: string[] = [];
+      const {
+        serviceType,
+        heading,
+        subheading,
+        feature,
+        benefit,
+        specialization,
+      } = req.body;
 
-      if (images && Array.isArray(images)) {
-        for (const image of images) {
+      console.log('Request body:', req.body);
+      console.log('Request files:', req.files);
+      
+      // Debug: Log the raw data before parsing
+      console.log('Raw feature:', feature);
+      console.log('Raw benefit:', benefit);
+      console.log('Raw specialization:', specialization);
+
+      const files = req.files as any;
+      const uploadResponses :any= [];
+
+      // Upload main images first (image and image2)
+      if (files.image && files.image[0]) {
+        try {
+          const uploaded = await cloudinary.uploader.upload(files.image[0].path, {
+            folder: "carousel",
+          });
+          uploadResponses.push(uploaded.secure_url);
+        } catch (error) {
+          console.error("Error uploading main image:", error);
+          return res.status(500).json({ message: "Main image upload failed" });
+        }
+      }
+
+      if (files.image2 && files.image2[0]) {
+        try {
+          const uploaded = await cloudinary.uploader.upload(files.image2[0].path, {
+            folder: "carousel",
+          });
+          uploadResponses.push(uploaded.secure_url);
+        } catch (error) {
+          console.error("Error uploading second image:", error);
+          return res.status(500).json({ message: "Second image upload failed" });
+        }
+      }
+
+      // Upload miniImages for specializations
+      if (files.miniImage && Array.isArray(files.miniImage)) {
+        for (const image of files.miniImage) {
           try {
-            let imageName = await cloudinary.uploader.upload(image.path, {
+            const uploaded = await cloudinary.uploader.upload(image.path, {
               folder: "carousel",
             });
-            uploadResponses.push(imageName.secure_url);
+            uploadResponses.push(uploaded.secure_url);
           } catch (error) {
-            console.error("Error uploading image to Cloudinary:", error);
-            return res.status(500).json({ message: "Error uploading images" });
+            console.error("Error uploading mini image:", error);
+            return res.status(500).json({ message: "Mini image upload failed" });
           }
         }
       }
+
+      console.log('Upload responses:', uploadResponses);
+
       const image = uploadResponses[0];
-      if (!image || !serviceType) {
-        return res.status(400).json({ error: "Missing image or serviceType" });
+      const image2 = uploadResponses[1];
+
+      if (!image || !image2 || !serviceType || !heading || !subheading) {
+        return res.status(400).json({ error: "Missing required fields" });
       }
 
+      // Safe JSON parsing function
+      const safeJsonParse = (data:any, fieldName:any) => {
+        if (!data) {
+          // Return empty array for array fields
+          if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
+            return [];
+          }
+          return null;
+        }
+        
+        // If it's already an object/array, return as is
+        if (typeof data === 'object') return data;
+        
+        // If it's a string, try to parse it
+        if (typeof data === 'string') {
+          try {
+            // Remove any extra whitespace and check if it looks like JSON
+            const trimmed = data.trim();
+            
+            // Handle empty string
+            if (trimmed === '') {
+              return ['feature', 'benefit', 'specialization'].includes(fieldName) ? [] : null;
+            }
+            
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+              return JSON.parse(trimmed);
+            }
+            
+            // If it's a simple string, treat it as a single item array for array fields
+            if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
+              return [trimmed];
+            }
+            return trimmed;
+          } catch (error:any) {
+            console.error(`Error parsing ${fieldName}:`, error);
+            console.error(`Raw data for ${fieldName}:`, data);
+            console.error(`Data type: ${typeof data}, Data length: ${data.length}`);
+            
+            // Return empty array for array fields on parse error
+            if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
+              return [];
+            }
+            throw new Error(`Invalid JSON format for ${fieldName}: ${error.message}`);
+          }
+        }
+        
+        // Return empty array for array fields if data type is unexpected
+        if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
+          return [];
+        }
+        return data;
+      };
+
+      // Parse with error handling
+      const parsedFeature = safeJsonParse(feature, 'feature');
+      const parsedBenefit = safeJsonParse(benefit, 'benefit');
+      let parsedSpecialization = safeJsonParse(specialization, 'specialization');
+
+      // Ensure parsedSpecialization is an array
+      if (!Array.isArray(parsedSpecialization)) {
+        console.error('parsedSpecialization is not an array:', parsedSpecialization);
+        return res.status(400).json({ 
+          error: "Specialization must be an array",
+          received: typeof parsedSpecialization,
+          value: parsedSpecialization
+        });
+      }
+
+      // Ensure parsedFeature is an array
+      if (!Array.isArray(parsedFeature)) {
+        console.error('parsedFeature is not an array:', parsedFeature);
+        return res.status(400).json({ 
+          error: "Feature must be an array",
+          received: typeof parsedFeature,
+          value: parsedFeature
+        });
+      }
+
+      // Ensure parsedBenefit is an array
+      if (!Array.isArray(parsedBenefit)) {
+        console.error('parsedBenefit is not an array:', parsedBenefit);
+        return res.status(400).json({ 
+          error: "Benefit must be an array",
+          received: typeof parsedBenefit,
+          value: parsedBenefit
+        });
+      }
+
+      // Attach miniImages to specializations (starting from index 2)
+      parsedSpecialization = parsedSpecialization.map((item, index) => ({
+        ...item,
+        miniImage: uploadResponses[index + 2] || null, // starts from third image, fallback to null
+      }));
+
       const created = await landingService.createService({
-        image,
         serviceType,
+        heading,
+        subheading,
+        image,
+        image2,
+        feature: parsedFeature,
+        benefit: parsedBenefit,
+        specialization: parsedSpecialization,
       });
-      return res.json(created);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to create service." });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Service created successfully',
+        data: created
+      });
+    } catch (error:any) {
+      console.error('Error creating service:', error);
+      return res.status(500).json({ 
+        success: false,
+        error: "Failed to create service.",
+        message: error.message 
+      });
     }
   };
+
+
+
 
   deleteService = async (req: Request, res: Response) => {
     try {
@@ -573,6 +733,41 @@ async createCareer(req: Request, res: Response) {
       return;
     }
   }
+
+  async register(req: Request, res: Response) {
+    try {
+      const { name,  email, password } = req.body;
+      const created = await landingService.register({
+        name,
+       
+        email,
+        password,
+      });
+      return res.json(created).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+
+
+  async login(req: Request, res: Response) {
+    try {
+      const {  email, password } = req.body;
+      const created = await landingService.login({
+       
+        email,
+        password,
+      });
+      return res.json(created).status(201);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
 }
+
+
+
 
 export const landingController = new LandingController();

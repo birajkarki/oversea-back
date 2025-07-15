@@ -12,6 +12,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String
+  password String
+  role String @default("ADMIN")
+
+}
+
 model Carousel {
   id    Int    @id @default(autoincrement())
   image String
@@ -30,10 +39,17 @@ model Stat {
 }
 
 model Service {
-  id          Int    @id @default(autoincrement())
-  image       String
-  serviceType String
+  id              Int      @id @default(autoincrement())
+  serviceType     String
+  heading         String?
+  subheading      String? 
+  image           String?
+  image2          String? 
+  feature         String[] @default([]) // optional with default empty array
+  benefit         Json?    @default("[]") // optional JSON, default to empty array
+  specialization  Json?    @default("[]") // optional JSON, default to empty array
 }
+
 
 model Partner {
   id    Int    @id @default(autoincrement())
