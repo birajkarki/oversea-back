@@ -60,9 +60,29 @@ class LandingService {
     });
   };
 
-  getAllServices = async () => {
-    return await prisma.service.findMany();
-  };
+   safeJsonParse(value: any) {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value; // or null if invalid JSON string
+    }
+  }
+  return value; // already parsed object/array
+}
+
+ getAllServices = async () => {
+  const services = await prisma.service.findMany();
+
+  return services.map(s => ({
+    ...s,
+    benefit: this.safeJsonParse(s.benefit),
+    specialization: this.safeJsonParse(s.specialization),
+  }));
+};
+
+
+  
 
   createService = async (data: {
     image: string;
