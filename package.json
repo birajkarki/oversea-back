@@ -4,11 +4,13 @@
   "description": "Express backend with TypeScript",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "clean": "rm -rf dist"
-  },
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+  "clean": "rm -rf dist",
+  "postinstall": "npx prisma generate"
+},
+
   "keywords": [
     "express",
     "typescript",
