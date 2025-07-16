@@ -72,197 +72,107 @@ class LandingController {
     }
   };
 
- createService = async (req:Request, res:Response) => {
-    try {
-      const {
-        serviceType,
-        heading,
-        subheading,
-        feature,
-        benefit,
-        specialization,
-      } = req.body;
+createService = async (req: Request, res: Response) => {
+  try {
+    const {
+      serviceType,
+      heading,
+      subheading,
+      feature,
+      benefit,
+      specialization,
+    } = req.body;
 
-      console.log('Request body:', req.body);
-      console.log('Request files:', req.files);
-      
-      // Debug: Log the raw data before parsing
-      console.log('Raw feature:', feature);
-      console.log('Raw benefit:', benefit);
-      console.log('Raw specialization:', specialization);
+    console.log(feature,benefit,specialization)
+   
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
 
-      const files = req.files as any;
-      const uploadResponses :any= [];
-
-      // Upload main images first (image and image2)
-      if (files.image && files.image[0]) {
-        try {
-          const uploaded = await cloudinary.uploader.upload(files.image[0].path, {
-            folder: "carousel",
-          });
-          uploadResponses.push(uploaded.secure_url);
-        } catch (error) {
-          console.error("Error uploading main image:", error);
-          return res.status(500).json({ message: "Main image upload failed" });
-        }
-      }
-
-      if (files.image2 && files.image2[0]) {
-        try {
-          const uploaded = await cloudinary.uploader.upload(files.image2[0].path, {
-            folder: "carousel",
-          });
-          uploadResponses.push(uploaded.secure_url);
-        } catch (error) {
-          console.error("Error uploading second image:", error);
-          return res.status(500).json({ message: "Second image upload failed" });
-        }
-      }
-
-      // Upload miniImages for specializations
-      if (files.miniImage && Array.isArray(files.miniImage)) {
-        for (const image of files.miniImage) {
-          try {
-            const uploaded = await cloudinary.uploader.upload(image.path, {
-              folder: "carousel",
-            });
-            uploadResponses.push(uploaded.secure_url);
-          } catch (error) {
-            console.error("Error uploading mini image:", error);
-            return res.status(500).json({ message: "Mini image upload failed" });
-          }
-        }
-      }
-
-      console.log('Upload responses:', uploadResponses);
-
-      const image = uploadResponses[0];
-      const image2 = uploadResponses[1];
-
-      if (!image || !image2 || !serviceType || !heading || !subheading) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Safe JSON parsing function
-      const safeJsonParse = (data:any, fieldName:any) => {
-        if (!data) {
-          // Return empty array for array fields
-          if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
-            return [];
-          }
-          return null;
-        }
-        
-        // If it's already an object/array, return as is
-        if (typeof data === 'object') return data;
-        
-        // If it's a string, try to parse it
-        if (typeof data === 'string') {
-          try {
-            // Remove any extra whitespace and check if it looks like JSON
-            const trimmed = data.trim();
-            
-            // Handle empty string
-            if (trimmed === '') {
-              return ['feature', 'benefit', 'specialization'].includes(fieldName) ? [] : null;
-            }
-            
-            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-              return JSON.parse(trimmed);
-            }
-            
-            // If it's a simple string, treat it as a single item array for array fields
-            if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
-              return [trimmed];
-            }
-            return trimmed;
-          } catch (error:any) {
-            console.error(`Error parsing ${fieldName}:`, error);
-            console.error(`Raw data for ${fieldName}:`, data);
-            console.error(`Data type: ${typeof data}, Data length: ${data.length}`);
-            
-            // Return empty array for array fields on parse error
-            if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
-              return [];
-            }
-            throw new Error(`Invalid JSON format for ${fieldName}: ${error.message}`);
-          }
-        }
-        
-        // Return empty array for array fields if data type is unexpected
-        if (['feature', 'benefit', 'specialization'].includes(fieldName)) {
-          return [];
-        }
-        return data;
-      };
-
-      // Parse with error handling
-      const parsedFeature = safeJsonParse(feature, 'feature');
-      const parsedBenefit = safeJsonParse(benefit, 'benefit');
-      let parsedSpecialization = safeJsonParse(specialization, 'specialization');
-
-      // Ensure parsedSpecialization is an array
-      if (!Array.isArray(parsedSpecialization)) {
-        console.error('parsedSpecialization is not an array:', parsedSpecialization);
-        return res.status(400).json({ 
-          error: "Specialization must be an array",
-          received: typeof parsedSpecialization,
-          value: parsedSpecialization
-        });
-      }
-
-      // Ensure parsedFeature is an array
-      if (!Array.isArray(parsedFeature)) {
-        console.error('parsedFeature is not an array:', parsedFeature);
-        return res.status(400).json({ 
-          error: "Feature must be an array",
-          received: typeof parsedFeature,
-          value: parsedFeature
-        });
-      }
-
-      // Ensure parsedBenefit is an array
-      if (!Array.isArray(parsedBenefit)) {
-        console.error('parsedBenefit is not an array:', parsedBenefit);
-        return res.status(400).json({ 
-          error: "Benefit must be an array",
-          received: typeof parsedBenefit,
-          value: parsedBenefit
-        });
-      }
-
-      // Attach miniImages to specializations (starting from index 2)
-      parsedSpecialization = parsedSpecialization.map((item, index) => ({
-        ...item,
-        miniImage: uploadResponses[index + 2] || null, // starts from third image, fallback to null
-      }));
-
-      const created = await landingService.createService({
-        serviceType,
-        heading,
-        subheading,
-        image,
-        image2,
-        feature: parsedFeature,
-        benefit: parsedBenefit,
-        specialization: parsedSpecialization,
+    const uploadToCloudinary = async (file: Express.Multer.File) => {
+      const uploaded = await cloudinary.uploader.upload(file.path, {
+        folder: "carousel",
       });
+      return uploaded.secure_url;
+    };
 
-      return res.status(201).json({
-        success: true,
-        message: 'Service created successfully',
-        data: created
-      });
-    } catch (error:any) {
-      console.error('Error creating service:', error);
-      return res.status(500).json({ 
-        success: false,
-        error: "Failed to create service.",
-        message: error.message 
-      });
+    // Upload image and image2
+    const image = files.image?.[0] ? await uploadToCloudinary(files.image[0]) : null;
+    const image2 = files.image2?.[0] ? await uploadToCloudinary(files.image2[0]) : null;
+
+    if (!image || !image2 || !serviceType || !heading || !subheading) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
-  };
 
+    // Upload all miniImages
+    const miniImageUrls: string[] = [];
+    if (Array.isArray(files.miniImage)) {
+      for (const file of files.miniImage) {
+        try {
+          const url = await uploadToCloudinary(file);
+          miniImageUrls.push(url);
+        } catch (err) {
+          console.error("Error uploading miniImage:", err);
+          return res.status(500).json({ message: "Mini image upload failed" });
+        }
+      }
+    }
+
+    // Safe JSON parser
+    const safeParse = (data: any, fallback: any[] = []) => {
+      try {
+        if (typeof data === "string") return JSON.parse(data.trim());
+        if (Array.isArray(data)) return JSON.parse(data[0]);
+        return fallback;
+      } catch (err) {
+        return fallback;
+      }
+    };
+console.log(feature)
+console.log(benefit,"e")
+    const parsedFeature = JSON.parse(feature);
+    console.log(parsedFeature)
+    const parsedBenefit =safeParse(benefit);
+    console.log(parsedBenefit)
+    let parsedSpecialization = safeParse(specialization);
+
+    if (!Array.isArray(parsedFeature) || !Array.isArray(parsedBenefit) || !Array.isArray(parsedSpecialization)) {
+      return res.status(400).json({ error: "feature, benefit, and specialization must be arrays" });
+    }
+
+    // Attach miniImage URLs to specialization
+    parsedSpecialization = parsedSpecialization.map((item: any, index: number) => ({
+      ...item,
+      miniImage: miniImageUrls[index] || null,
+    }));
+    parsedSpecialization=JSON.stringify(parsedSpecialization)
+console.log(parsedSpecialization)
+    // Save to DB
+    const created = await landingService.createService({
+      serviceType,
+      heading,
+      subheading,
+      image,
+      image2,
+      feature: parsedFeature,
+      benefit: benefit,
+      specialization: parsedSpecialization,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Service created successfully',
+      data: created
+    });
+  } catch (error: any) {
+    console.error('Error creating service:', error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to create service.",
+      message: error.message,
+    });
+  }
+};
 
 
 

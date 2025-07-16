@@ -70,7 +70,7 @@ createService = async (data: {
   subheading: string;
   feature: string[];
   benefit: Array<{ title: string; subtitle: string }>;
-  specialization: Array<{ heading: string; subheading: string; miniImage: string }>;
+  specialization:any;
 }) => {
   return await prisma.service.create({
     data,
