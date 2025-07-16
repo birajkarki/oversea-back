@@ -303,3 +303,62 @@ async register(data: {
 }
 
 export const landingService = new LandingService();
+
+export const deleteServiceById = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({ success: false, message: "Invalid ID" });
+  }
+
+  try {
+    const service = await prisma.service.findUnique({ where: { id } });
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+
+    await prisma.service.delete({ where: { id } });
+
+    return res.status(200).json({
+      success: true,
+      message: `Service with id ${id} deleted successfully.`,
+    });
+  } catch (error: any) {
+    console.error("Error deleting service:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete service.",
+      error: error.message,
+    });
+  }
+};
+export const getServiceById = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({ success: false, message: "Invalid ID" });
+  }
+
+  try {
+    const service = await prisma.service.findUnique({ where: { id } });
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      message: `Service with id ${id} retrieved successfully.`,
+      data: service,
+    });
+  } catch (error: any) {
+    console.error("Error deleting service:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete service.",
+      error: error.message,
+    });
+  }
+};

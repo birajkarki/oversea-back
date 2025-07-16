@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import { landingController } from "../controller/landing.controller";
 import upload from "../config/multer";
-
+import { deleteServiceById, getServiceById } from "../service/landing.service";
 const app = express.Router();
 
 // To get the homepage banner image
@@ -23,6 +23,8 @@ app.patch("/service", upload.fields([
   ]), landingController.createService);
 
 app.delete("/service/:id", landingController.deleteService);
+app.delete("/service/:id", deleteServiceById);
+app.get("/service/:id", getServiceById);
 
 // To get partner logos
 app.get("/partner", landingController.getPartners);
