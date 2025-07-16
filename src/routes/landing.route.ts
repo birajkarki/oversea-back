@@ -13,28 +13,28 @@ app.patch("/carousel",isValidUser, upload.array("image"), landingController.crea
 // To get the stat in landing page
 app.get("/stat", landingController.getStat);
 // To create/update the stat in landing page
-app.patch("/stat", landingController.patchStat);
+app.patch("/stat",isValidUser,  landingController.patchStat);
 
 // TO get service image
 app.get("/service", landingController.getServices);
-app.patch("/service", upload.fields([
+app.patch("/service",isValidUser, upload.fields([
     { name: "image", maxCount: 1 },
     { name: "image2", maxCount: 1 },
     { name: "miniImage",maxCount:10 } 
   ]), landingController.createService);
 
-app.delete("/service/:id", landingController.deleteService);
+app.delete("/service/:id",isValidUser,  landingController.deleteService);
 
 // To get partner logos
 app.get("/partner", landingController.getPartners);
-app.patch("/partner", upload.array("image"), landingController.patchPartner);
-app.delete("/partner/:id", landingController.deletePartner);
+app.patch("/partner",isValidUser,  upload.array("image"), landingController.patchPartner);
+app.delete("/partner/:id",isValidUser,  landingController.deletePartner);
 
 // To get team members
 app.get("/team", landingController.getTeam);
-app.post("/team", upload.array("image"), landingController.postTeam);
-app.patch("/team/:id", upload.array("image"), landingController.patchTeam);
-app.delete("/team/:id", landingController.deleteTeam);
+app.post("/team",isValidUser,  upload.array("image"), landingController.postTeam);
+app.patch("/team/:id",isValidUser,  upload.array("image"), landingController.patchTeam);
+app.delete("/team/:id",isValidUser,  landingController.deleteTeam);
 
 //login
 
@@ -52,22 +52,23 @@ app.post(
 );
 app.patch(
   "/testimonial/:id",
+  isValidUser, 
   upload.array("image"),
   landingController.updateTestimonial
 );
-app.delete("/testimonial/:id", landingController.deleteTestimonial);
+app.delete("/testimonial/:id",isValidUser,  landingController.deleteTestimonial);
 
 
 
 app.get("/blogs", landingController.getBlogs);
 app.get("/blogs/:id", landingController.getBlogById);
-app.post("/blog", upload.array("image"), landingController.createBlog);
-app.patch("/blog/:id", upload.array("image"), landingController.updateBlog);
-app.delete("/blog/:id", landingController.deleteBlog);
+app.post("/blog", isValidUser, upload.array("image"), landingController.createBlog);
+app.patch("/blog/:id",isValidUser,  upload.array("image"), landingController.updateBlog);
+app.delete("/blog/:id",isValidUser,  landingController.deleteBlog);
 
 
 app.get("/careers", landingController.getCareers);
-app.post("/career", upload.array("resume"), landingController.createCareer);
+app.post("/career",  upload.array("resume"), landingController.createCareer);
 
 
 app.get("/feedbacks", landingController.getFeedbacks);
