@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+     
 }
 datasource db {
   provider = "postgresql"
@@ -18,6 +19,7 @@ model User {
   email String
   password String
   role String @default("ADMIN")
+  token String @default("")
 
 }
 

@@ -1,13 +1,14 @@
 import express, { Request, Response, NextFunction } from "express";
 import { landingController } from "../controller/landing.controller";
 import upload from "../config/multer";
+import { isValidUser } from "../middleware/auth";
 
 const app = express.Router();
 
 // To get the homepage banner image
 app.get("/carousel", landingController.getCarousel);
 // To create or update the homepage banner image
-app.patch("/carousel", upload.array("image"), landingController.createCarousel);
+app.patch("/carousel",isValidUser, upload.array("image"), landingController.createCarousel);
 
 // To get the stat in landing page
 app.get("/stat", landingController.getStat);

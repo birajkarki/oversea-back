@@ -72,109 +72,123 @@ class LandingController {
     }
   };
 
-createService = async (req: Request, res: Response) => {
-  try {
-    const {
-      serviceType,
-      heading,
-      subheading,
-      feature,
-      benefit,
-      specialization,
-    } = req.body;
+  createService = async (req: Request, res: Response) => {
+    try {
+      const {
+        serviceType,
+        heading,
+        subheading,
+        feature,
+        benefit,
+        specialization,
+      } = req.body;
 
-    console.log(feature,benefit,specialization)
-   
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
+      console.log(feature, benefit, specialization);
 
-    const uploadToCloudinary = async (file: Express.Multer.File) => {
-      const uploaded = await cloudinary.uploader.upload(file.path, {
-        folder: "carousel",
-      });
-      return uploaded.secure_url;
-    };
+      const files = req.files as {
+        [fieldname: string]: Express.Multer.File[];
+      };
 
-    // Upload image and image2
-    const image = files.image?.[0] ? await uploadToCloudinary(files.image[0]) : null;
-    const image2 = files.image2?.[0] ? await uploadToCloudinary(files.image2[0]) : null;
+      const uploadToCloudinary = async (file: Express.Multer.File) => {
+        const uploaded = await cloudinary.uploader.upload(file.path, {
+          folder: "carousel",
+        });
+        return uploaded.secure_url;
+      };
 
-    if (!image || !image2 || !serviceType || !heading || !subheading) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+      // Upload image and image2
+      const image = files.image?.[0]
+        ? await uploadToCloudinary(files.image[0])
+        : null;
+      const image2 = files.image2?.[0]
+        ? await uploadToCloudinary(files.image2[0])
+        : null;
 
-    // Upload all miniImages
-    const miniImageUrls: string[] = [];
-    if (Array.isArray(files.miniImage)) {
-      for (const file of files.miniImage) {
-        try {
-          const url = await uploadToCloudinary(file);
-          miniImageUrls.push(url);
-        } catch (err) {
-          console.error("Error uploading miniImage:", err);
-          return res.status(500).json({ message: "Mini image upload failed" });
+      if (!image || !image2 || !serviceType || !heading || !subheading) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Upload all miniImages
+      const miniImageUrls: string[] = [];
+      if (Array.isArray(files.miniImage)) {
+        for (const file of files.miniImage) {
+          try {
+            const url = await uploadToCloudinary(file);
+            miniImageUrls.push(url);
+          } catch (err) {
+            console.error("Error uploading miniImage:", err);
+            return res
+              .status(500)
+              .json({ message: "Mini image upload failed" });
+          }
         }
       }
-    }
 
-    // Safe JSON parser
-    const safeParse = (data: any, fallback: any[] = []) => {
-      try {
-        if (typeof data === "string") return JSON.parse(data.trim());
-        if (Array.isArray(data)) return JSON.parse(data[0]);
-        return fallback;
-      } catch (err) {
-        return fallback;
+      // Safe JSON parser
+      const safeParse = (data: any, fallback: any[] = []) => {
+        try {
+          if (typeof data === "string") return JSON.parse(data.trim());
+          if (Array.isArray(data)) return JSON.parse(data[0]);
+          return fallback;
+        } catch (err) {
+          return fallback;
+        }
+      };
+      console.log(feature);
+      console.log(benefit, "e");
+      const parsedFeature = JSON.parse(feature);
+      console.log(parsedFeature);
+      const parsedBenefit = safeParse(benefit);
+      console.log(parsedBenefit);
+      let parsedSpecialization = safeParse(specialization);
+
+      if (
+        !Array.isArray(parsedFeature) ||
+        !Array.isArray(parsedBenefit) ||
+        !Array.isArray(parsedSpecialization)
+      ) {
+        return res
+          .status(400)
+          .json({
+            error: "feature, benefit, and specialization must be arrays",
+          });
       }
-    };
-console.log(feature)
-console.log(benefit,"e")
-    const parsedFeature = JSON.parse(feature);
-    console.log(parsedFeature)
-    const parsedBenefit =safeParse(benefit);
-    console.log(parsedBenefit)
-    let parsedSpecialization = safeParse(specialization);
 
-    if (!Array.isArray(parsedFeature) || !Array.isArray(parsedBenefit) || !Array.isArray(parsedSpecialization)) {
-      return res.status(400).json({ error: "feature, benefit, and specialization must be arrays" });
+      // Attach miniImage URLs to specialization
+      parsedSpecialization = parsedSpecialization.map(
+        (item: any, index: number) => ({
+          ...item,
+          miniImage: miniImageUrls[index] || null,
+        })
+      );
+      parsedSpecialization = JSON.stringify(parsedSpecialization);
+      console.log(parsedSpecialization);
+      // Save to DB
+      const created = await landingService.createService({
+        serviceType,
+        heading,
+        subheading,
+        image,
+        image2,
+        feature: parsedFeature,
+        benefit: benefit,
+        specialization: parsedSpecialization,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Service created successfully",
+        data: created,
+      });
+    } catch (error: any) {
+      console.error("Error creating service:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to create service.",
+        message: error.message,
+      });
     }
-
-    // Attach miniImage URLs to specialization
-    parsedSpecialization = parsedSpecialization.map((item: any, index: number) => ({
-      ...item,
-      miniImage: miniImageUrls[index] || null,
-    }));
-    parsedSpecialization=JSON.stringify(parsedSpecialization)
-console.log(parsedSpecialization)
-    // Save to DB
-    const created = await landingService.createService({
-      serviceType,
-      heading,
-      subheading,
-      image,
-      image2,
-      feature: parsedFeature,
-      benefit: benefit,
-      specialization: parsedSpecialization,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Service created successfully',
-      data: created
-    });
-  } catch (error: any) {
-    console.error('Error creating service:', error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to create service.",
-      message: error.message,
-    });
-  }
-};
-
-
+  };
 
   deleteService = async (req: Request, res: Response) => {
     try {
@@ -574,7 +588,7 @@ console.log(parsedSpecialization)
     }
   }
 
-async createCareer(req: Request, res: Response) {
+  async createCareer(req: Request, res: Response) {
     try {
       const { name, email, phoneNumber } = req.body;
       const files = req.files;
@@ -594,7 +608,7 @@ async createCareer(req: Request, res: Response) {
         mimetype: resumeFile?.mimetype,
         size: resumeFile?.size,
         path: resumeFile?.path,
-        filename: resumeFile?.filename
+        filename: resumeFile?.filename,
       });
 
       // Check if the file was successfully uploaded to Cloudinary
@@ -616,7 +630,7 @@ async createCareer(req: Request, res: Response) {
       console.error("Error in createCareer:", error);
       return res.status(500).json({ message: "Internal server error" });
     }
-}
+  }
   //feedback
   async getFeedbacks(req: Request, res: Response) {
     try {
@@ -646,10 +660,10 @@ async createCareer(req: Request, res: Response) {
 
   async register(req: Request, res: Response) {
     try {
-      const { name,  email, password } = req.body;
+      const { name, email, password } = req.body;
       const created = await landingService.register({
         name,
-       
+
         email,
         password,
       });
@@ -660,24 +674,30 @@ async createCareer(req: Request, res: Response) {
     }
   }
 
-
   async login(req: Request, res: Response) {
     try {
-      const {  email, password } = req.body;
+      const { email, password } = req.body;
       const created = await landingService.login({
-       
         email,
         password,
       });
-      return res.json(created).status(201);
+
+      const token = created.token;
+      if (token) {
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production", // only send over HTTPS
+          sameSite: "strict",
+          maxAge: 60 * 60 * 1000,  
+        });
+      }
+      
+      return res.json({...created,token:""}).status(201);
     } catch (error) {
       console.log(error);
       return;
     }
   }
 }
-
-
-
 
 export const landingController = new LandingController();
