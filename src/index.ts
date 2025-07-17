@@ -3,13 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import landingRouter from './routes/landing.route';
+import cookieParser from 'cookie-parser';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-
+app.use(cookieParser());
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors()); // Enable CORS

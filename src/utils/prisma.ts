@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+    import { PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient({
-    omit:{user:{password:true}}
-});
+    export const prisma = new PrismaClient({
+        omit:{user:{password:true,token:true}}
+    });
