@@ -399,3 +399,33 @@ export const getServiceById = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const deleteBannerById = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if (isNaN(id)) {
+    return res.status(400).json({ success: false, message: "Invalid ID" });
+  }
+
+  try {
+    const service = await prisma.carousel.findUnique({ where: { id } });
+
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Banner not found" });
+    }
+
+    await prisma.carousel.delete({ where: { id } });
+
+    return res.status(200).json({
+      success: true,
+      message: `banner with id ${id} deleted successfully.`,
+    });
+  } catch (error: any) {
+    console.error("Error deleting banner:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete banner.",
+      error: error.message,
+    });
+  }
+};

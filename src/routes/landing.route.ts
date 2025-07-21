@@ -2,19 +2,24 @@ import express, { Request, Response, NextFunction } from "express";
 import { landingController } from "../controller/landing.controller";
 import upload from "../config/multer";
 import { isValidUser } from "../middleware/auth";
-import { getServiceById } from "../service/landing.service";
+import { deleteBannerById, getServiceById } from "../service/landing.service";
+import { resolve } from "path";
 const app = express.Router();
 
 // To get the homepage banner image
 app.get("/carousel", landingController.getCarousel);
 // To create or update the homepage banner image
 app.patch("/carousel",isValidUser, upload.array("image"), landingController.createCarousel);
+app.delete("/carousel/:id",isValidUser,deleteBannerById);
 
 // To get the stat in landing page
 app.get("/stat", landingController.getStat);
 // To create/update the stat in landing page
 app.patch("/stat",isValidUser,  landingController.patchStat);
 
+app.get("/isValid",isValidUser,(req,res)=>{
+  res.status(200).send({success:true})
+});
 // TO get service image
 app.get("/service", landingController.getServices);
 app.patch("/service",isValidUser, upload.fields([
