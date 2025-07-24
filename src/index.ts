@@ -10,10 +10,22 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// CORS configuration
+const corsOptions = {
+  origin: ['https://sadiksha.com.np', 'http://localhost:3000'], // Allow both production and local development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['set-cookie'],
+};
+
 app.use(cookieParser());
 // Middleware
-app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+})); // Security headers with cross-origin resource policy
+app.use(cors(corsOptions)); // Enable CORS with specific options
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
