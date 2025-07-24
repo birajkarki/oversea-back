@@ -27,7 +27,7 @@ jobs:
       - name: Clone the repository and build the application
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_IP }} << 'EOF'
-          REPO_DIR="/root/Backend-sadikshya-staging"  # Directory where the app will be stored
+          REPO_DIR="/root/Backend-sadikshya-main"  # Directory where the app will be stored
           REPO_URL="git@github.com:birajkarki/oversea-back.git"
           
 
@@ -35,10 +35,10 @@ jobs:
           if [ -d "$REPO_DIR/.git" ]; then
             echo "Repository exists. Pulling the latest changes."
             cd $REPO_DIR
-            git pull origin staging
+            git pull origin main
           else
             echo "Cloning the repository to the root directory."
-            git clone -b staging $REPO_URL $REPO_DIR
+            git clone -b main $REPO_URL $REPO_DIR
             cd $REPO_DIR
           fi
 
