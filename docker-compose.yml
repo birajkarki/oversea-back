@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: backend-app-sadikshya
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - PORT=4007
+      - NODE_ENV=production
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SERVICE=${SMTP_SERVICE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "4007:4007"
+    command: >
+      sh -c "npx prisma migrate deploy || { echo 'Prisma migration failed'; exit 1; } &&
+             npm run build || { echo 'Build failed'; exit 1; } &&
+             node dist/index.js"
