@@ -3,7 +3,7 @@ name: CI/CD for Next.js App
 on:
   push:
     branches:
-      - staging  
+      - main  
 
 jobs:
   deploy:
