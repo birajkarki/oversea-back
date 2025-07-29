@@ -631,6 +631,75 @@ class LandingController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
+  // Add these methods to your existing landingController
+
+// Add these methods to your existing landingController
+
+async getEmployers(req: Request, res: Response) {
+  try {
+    const data = await landingService.getEmployers();
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in getEmployers:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+async createEmployer(req: Request, res: Response) {
+  try {
+    const { 
+      companyName, 
+      contactPerson, 
+      email, 
+      phoneNumber, 
+      industry, 
+      jobTitle, 
+      location, 
+      requirements, 
+      urgency 
+    } = req.body;
+
+    console.log("Employer request body:", req.body);
+
+    // Validate required fields
+    if (!companyName || !contactPerson || !email || !phoneNumber || !jobTitle || !location) {
+      return res.status(400).json({ 
+        message: "Company name, contact person, email, phone number, job title, and location are required" 
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // Validate urgency value
+    const validUrgencyValues = ['normal', 'urgent', 'immediate'];
+    const urgencyValue = urgency || 'normal';
+    if (!validUrgencyValues.includes(urgencyValue)) {
+      return res.status(400).json({ message: "Invalid urgency value" });
+    }
+
+    const created = await landingService.createEmployer({
+      companyName,
+      contactPerson,
+      email,
+      phoneNumber,
+      industry: industry || null,
+      jobTitle,
+      location,
+      requirements: requirements || null,
+      urgency: urgencyValue,
+    });
+
+    console.log("Employer created successfully:", created);
+    return res.status(201).json(created);
+  } catch (error) {
+    console.error("Error in createEmployer:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
   //feedback
   async getFeedbacks(req: Request, res: Response) {
     try {

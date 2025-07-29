@@ -65,7 +65,8 @@ app.patch(
 app.delete("/testimonial/:id",isValidUser,  landingController.deleteTestimonial);
 
 
-
+app.get("/employers", landingController.getEmployers);
+app.post("/employer", landingController.createEmployer);
 app.get("/blogs", landingController.getBlogs);
 app.get("/blogs/:id", landingController.getBlogById);
 app.post("/blog", isValidUser, upload.array("image"), landingController.createBlog);
