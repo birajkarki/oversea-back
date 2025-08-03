@@ -129,8 +129,21 @@ class LandingService {
     link: string;
     profileImg: string;
   }) => {
-    const team = await prisma.team.create({ data });
-    console.log(team);
+      const maxOrderResult = await prisma.team.aggregate({
+      _max: {
+        order: true
+      }
+    });
+
+    const nextOrder = (maxOrderResult._max.order || 0) + 1;
+ const team = await prisma.team.create({
+  data: {
+    ...data,
+    order: nextOrder,
+  },
+});
+console.log(team);
+
     return team;
   };
 
@@ -319,31 +332,8 @@ class LandingService {
         name: data.name,
       },
     });
-    
   }
-
-  async getEmployers() {
-  return await prisma.employer.findMany({
-    orderBy: { createdAt: "desc" },
-  });
 }
-
-async createEmployer(data: {
-  companyName: string;
-  contactPerson: string;
-  email: string;
-  phoneNumber: string;
-  industry?: string;
-  jobTitle: string;
-  location: string;
-  requirements?: string;
-  urgency: string;
-}) {
-  return await prisma.employer.create({ data });
-}
-}
-
-
 
 export const landingService = new LandingService();
 

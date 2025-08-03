@@ -41,7 +41,7 @@ app.get("/team", landingController.getTeam);
 app.post("/team",isValidUser,  upload.array("image"), landingController.postTeam);
 app.patch("/team/:id",isValidUser,  upload.array("image"), landingController.patchTeam);
 app.delete("/team/:id",isValidUser,  landingController.deleteTeam);
-
+app.post("/team/reorder",landingController.reorder)
 //login
 
 app.post('/login',landingController.login)
@@ -65,8 +65,7 @@ app.patch(
 app.delete("/testimonial/:id",isValidUser,  landingController.deleteTestimonial);
 
 
-app.get("/employers", landingController.getEmployers);
-app.post("/employer", landingController.createEmployer);
+
 app.get("/blogs", landingController.getBlogs);
 app.get("/blogs/:id", landingController.getBlogById);
 app.post("/blog", isValidUser, upload.array("image"), landingController.createBlog);

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { landingService } from "../service/landing.service";
 import cloudinary from "../config/cloudinaryConfig";
+import { prisma } from "../utils/prisma";
 
 class LandingController {
   constructor() {}
@@ -631,75 +632,6 @@ class LandingController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
-  // Add these methods to your existing landingController
-
-// Add these methods to your existing landingController
-
-async getEmployers(req: Request, res: Response) {
-  try {
-    const data = await landingService.getEmployers();
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error("Error in getEmployers:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-async createEmployer(req: Request, res: Response) {
-  try {
-    const { 
-      companyName, 
-      contactPerson, 
-      email, 
-      phoneNumber, 
-      industry, 
-      jobTitle, 
-      location, 
-      requirements, 
-      urgency 
-    } = req.body;
-
-    console.log("Employer request body:", req.body);
-
-    // Validate required fields
-    if (!companyName || !contactPerson || !email || !phoneNumber || !jobTitle || !location) {
-      return res.status(400).json({ 
-        message: "Company name, contact person, email, phone number, job title, and location are required" 
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    // Validate urgency value
-    const validUrgencyValues = ['normal', 'urgent', 'immediate'];
-    const urgencyValue = urgency || 'normal';
-    if (!validUrgencyValues.includes(urgencyValue)) {
-      return res.status(400).json({ message: "Invalid urgency value" });
-    }
-
-    const created = await landingService.createEmployer({
-      companyName,
-      contactPerson,
-      email,
-      phoneNumber,
-      industry: industry || null,
-      jobTitle,
-      location,
-      requirements: requirements || null,
-      urgency: urgencyValue,
-    });
-
-    console.log("Employer created successfully:", created);
-    return res.status(201).json(created);
-  } catch (error) {
-    console.error("Error in createEmployer:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-}
   //feedback
   async getFeedbacks(req: Request, res: Response) {
     try {
@@ -726,6 +658,55 @@ async createEmployer(req: Request, res: Response) {
       return;
     }
   }
+
+
+  async reorder(req: Request, res: Response) {
+  try {
+    const orderData = req.body; // Array of {id: number, order: number}
+    
+    // Validate the request body
+    if (!Array.isArray(orderData)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request format. Expected an array of order data."
+      });
+    }
+
+    // Validate each item in the array
+    for (const item of orderData) {
+      if (!item.id || typeof item.order !== 'number') {
+        return res.status(400).json({
+          success: false,
+          message: "Each item must have an 'id' and 'order' field."
+        });
+      }
+    }
+
+    // Use a transaction to ensure all updates succeed or fail together
+    const updatedTeamMembers = await prisma.$transaction(
+      orderData.map((item: { id: number; order: number }) =>
+        prisma.team.update({
+          where: { id: item.id },
+          data: { order: item.order }
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Team order updated successfully",
+      data: updatedTeamMembers
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while updating team order",
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+}
 
   async register(req: Request, res: Response) {
     try {
