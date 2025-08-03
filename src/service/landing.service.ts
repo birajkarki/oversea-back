@@ -319,8 +319,31 @@ class LandingService {
         name: data.name,
       },
     });
+    
   }
+
+  async getEmployers() {
+  return await prisma.employer.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 }
+
+async createEmployer(data: {
+  companyName: string;
+  contactPerson: string;
+  email: string;
+  phoneNumber: string;
+  industry?: string;
+  jobTitle: string;
+  location: string;
+  requirements?: string;
+  urgency: string;
+}) {
+  return await prisma.employer.create({ data });
+}
+}
+
+
 
 export const landingService = new LandingService();
 

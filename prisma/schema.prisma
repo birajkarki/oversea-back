@@ -82,6 +82,20 @@ model Testimonial {
   createdAt DateTime @default(now())
 }
 
+model Employer {
+  id            Int      @id @default(autoincrement())
+  companyName   String
+  contactPerson String
+  email         String
+  phoneNumber   String
+  industry      String?
+  jobTitle      String
+  location      String
+  requirements  String?
+  urgency       String   @default("normal")
+  createdAt     DateTime @default(now())
+}
+
 model Blog {
   id           Int      @id @default(autoincrement())
   thumbnailImg String
@@ -107,3 +121,4 @@ model Feedback {
   message   String
   createdAt DateTime @default(now())
 }
+
