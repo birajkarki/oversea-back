@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.landingController = void 0;
 const landing_service_1 = require("../service/landing.service");
 const cloudinaryConfig_1 = __importDefault(require("../config/cloudinaryConfig"));
+const prisma_1 = require("../utils/prisma");
 class LandingController {
     constructor() {
         this.getStat = async (req, res) => {
@@ -576,53 +577,6 @@ class LandingController {
             return res.status(500).json({ message: "Internal server error" });
         }
     }
-    async getEmployers(req, res) {
-        try {
-            const data = await landing_service_1.landingService.getEmployers();
-            return res.status(200).json(data);
-        }
-        catch (error) {
-            console.error("Error in getEmployers:", error);
-            return res.status(500).json({ message: "Internal server error" });
-        }
-    }
-    async createEmployer(req, res) {
-        try {
-            const { companyName, contactPerson, email, phoneNumber, industry, jobTitle, location, requirements, urgency } = req.body;
-            console.log("Employer request body:", req.body);
-            if (!companyName || !contactPerson || !email || !phoneNumber || !jobTitle || !location) {
-                return res.status(400).json({
-                    message: "Company name, contact person, email, phone number, job title, and location are required"
-                });
-            }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return res.status(400).json({ message: "Invalid email format" });
-            }
-            const validUrgencyValues = ['normal', 'urgent', 'immediate'];
-            const urgencyValue = urgency || 'normal';
-            if (!validUrgencyValues.includes(urgencyValue)) {
-                return res.status(400).json({ message: "Invalid urgency value" });
-            }
-            const created = await landing_service_1.landingService.createEmployer({
-                companyName,
-                contactPerson,
-                email,
-                phoneNumber,
-                industry: industry || null,
-                jobTitle,
-                location,
-                requirements: requirements || null,
-                urgency: urgencyValue,
-            });
-            console.log("Employer created successfully:", created);
-            return res.status(201).json(created);
-        }
-        catch (error) {
-            console.error("Error in createEmployer:", error);
-            return res.status(500).json({ message: "Internal server error" });
-        }
-    }
     async getFeedbacks(req, res) {
         try {
             const data = await landing_service_1.landingService.getFeedbacks();
@@ -647,6 +601,42 @@ class LandingController {
         catch (error) {
             console.log(error);
             return;
+        }
+    }
+    async reorder(req, res) {
+        try {
+            const orderData = req.body;
+            if (!Array.isArray(orderData)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid request format. Expected an array of order data."
+                });
+            }
+            for (const item of orderData) {
+                if (!item.id || typeof item.order !== 'number') {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Each item must have an 'id' and 'order' field."
+                    });
+                }
+            }
+            const updatedTeamMembers = await prisma_1.prisma.$transaction(orderData.map((item) => prisma_1.prisma.team.update({
+                where: { id: item.id },
+                data: { order: item.order }
+            })));
+            return res.status(200).json({
+                success: true,
+                message: "Team order updated successfully",
+                data: updatedTeamMembers
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while updating team order",
+                error: process.env.NODE_ENV === 'development' ? error : undefined
+            });
         }
     }
     async register(req, res) {

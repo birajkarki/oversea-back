@@ -58,7 +58,18 @@ class LandingService {
             return await prisma_1.prisma.team.findMany();
         };
         this.createTeamMember = async (data) => {
-            const team = await prisma_1.prisma.team.create({ data });
+            const maxOrderResult = await prisma_1.prisma.team.aggregate({
+                _max: {
+                    order: true
+                }
+            });
+            const nextOrder = (maxOrderResult._max.order || 0) + 1;
+            const team = await prisma_1.prisma.team.create({
+                data: {
+                    ...data,
+                    order: nextOrder,
+                },
+            });
             console.log(team);
             return team;
         };
@@ -196,14 +207,6 @@ class LandingService {
                 name: data.name,
             },
         });
-    }
-    async getEmployers() {
-        return await prisma_1.prisma.employer.findMany({
-            orderBy: { createdAt: "desc" },
-        });
-    }
-    async createEmployer(data) {
-        return await prisma_1.prisma.employer.create({ data });
     }
 }
 exports.landingService = new LandingService();

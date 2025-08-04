@@ -107,6 +107,7 @@ declare class LandingService {
         createdAt: Date;
         link: string;
         address: string;
+        order: number;
         linkedin: string;
         profileImg: string;
     }[]>;
@@ -128,6 +129,7 @@ declare class LandingService {
         createdAt: Date;
         link: string;
         address: string;
+        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -149,6 +151,7 @@ declare class LandingService {
         createdAt: Date;
         link: string;
         address: string;
+        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -161,6 +164,7 @@ declare class LandingService {
         createdAt: Date;
         link: string;
         address: string;
+        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -311,42 +315,6 @@ declare class LandingService {
         name: string;
         email: string;
         role: string;
-    }>;
-    getEmployers(): Promise<{
-        id: number;
-        email: string;
-        createdAt: Date;
-        phoneNumber: string;
-        companyName: string;
-        contactPerson: string;
-        industry: string | null;
-        jobTitle: string;
-        location: string;
-        requirements: string | null;
-        urgency: string;
-    }[]>;
-    createEmployer(data: {
-        companyName: string;
-        contactPerson: string;
-        email: string;
-        phoneNumber: string;
-        industry?: string;
-        jobTitle: string;
-        location: string;
-        requirements?: string;
-        urgency: string;
-    }): Promise<{
-        id: number;
-        email: string;
-        createdAt: Date;
-        phoneNumber: string;
-        companyName: string;
-        contactPerson: string;
-        industry: string | null;
-        jobTitle: string;
-        location: string;
-        requirements: string | null;
-        urgency: string;
     }>;
 }
 export declare const landingService: LandingService;

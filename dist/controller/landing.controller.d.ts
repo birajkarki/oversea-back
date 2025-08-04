@@ -27,10 +27,9 @@ declare class LandingController {
     deleteBlog(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     getCareers(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     createCareer(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
-    getEmployers(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
-    createEmployer(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     getFeedbacks(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     createFeedback(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    reorder(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     register(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     login(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
