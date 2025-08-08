@@ -22,7 +22,7 @@ app.get("/isValid",isValidUser,(req,res)=>{
 });
 // TO get service image
 app.get("/service", landingController.getServices);
-app.patch("/service",isValidUser, upload.fields([
+app.patch("/service", upload.fields([
     { name: "image", maxCount: 1 },
     { name: "image2", maxCount: 1 },
     { name: "miniImage",maxCount:10 } 

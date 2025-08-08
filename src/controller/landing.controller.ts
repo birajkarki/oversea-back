@@ -663,7 +663,6 @@ class LandingController {
   async reorder(req: Request, res: Response) {
   try {
     const orderData = req.body; // Array of {id: number, order: number}
-    
     // Validate the request body
     if (!Array.isArray(orderData)) {
       return res.status(400).json({
