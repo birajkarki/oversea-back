@@ -1,4 +1,4 @@
-name: CI/CD for Next.js App
+name: CI/CD for Backend
 
 on:
   push:

@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import landingRouter from './routes/landing.route';
 import cookieParser from 'cookie-parser';
 
-// Load environment variables
+// Load environment variabless
 dotenv.config();
 
 const app = express();
