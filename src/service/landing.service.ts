@@ -60,33 +60,31 @@ class LandingService {
     });
   };
 
-   safeJsonParse(value: any) {
-  if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value; // or null if invalid JSON string
+  safeJsonParse(value: any) {
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value; // or null if invalid JSON string
+      }
     }
+    return value; // already parsed object/array
   }
-  return value; // already parsed object/array
-}
 
- getAllServices = async () => {
-  const services = await prisma.service.findMany();
+  getAllServices = async () => {
+    const services = await prisma.service.findMany();
 
-  return services.map(s => ({
-    ...s,
-    benefit: this.safeJsonParse(s.benefit),
-    specialization: this.safeJsonParse(s.specialization),
-  }));
-};
-
-
-  
+    return services.map((s) => ({
+      ...s,
+      benefit: this.safeJsonParse(s.benefit),
+      specialization: this.safeJsonParse(s.specialization),
+    }));
+  };
 
   createService = async (data: {
     image: string;
     image2: string;
+    image3:string;
     serviceType: string;
     heading: string;
     subheading: string;
@@ -129,20 +127,20 @@ class LandingService {
     link: string;
     profileImg: string;
   }) => {
-      const maxOrderResult = await prisma.team.aggregate({
+    const maxOrderResult = await prisma.team.aggregate({
       _max: {
-        order: true
-      }
+        order: true,
+      },
     });
 
     const nextOrder = (maxOrderResult._max.order || 0) + 1;
- const team = await prisma.team.create({
-  data: {
-    ...data,
-    order: nextOrder,
-  },
-});
-console.log(team);
+    const team = await prisma.team.create({
+      data: {
+        ...data,
+        order: nextOrder,
+      },
+    });
+    console.log(team);
 
     return team;
   };
@@ -299,7 +297,7 @@ console.log(team);
     return sendEmail(data.email, "Feedback", data.message);
   }
 
-  async login(data: { email: string; password: string ;}) {
+  async login(data: { email: string; password: string }) {
     const user = await prisma.user.findFirst({ where: { email: data.email } });
     if (!user) {
       throw new Error("User not found");
@@ -348,7 +346,9 @@ export const deleteServiceById = async (req: Request, res: Response) => {
     const service = await prisma.service.findUnique({ where: { id } });
 
     if (!service) {
-      return res.status(404).json({ success: false, message: "Service not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Service not found" });
     }
 
     await prisma.service.delete({ where: { id } });
@@ -367,7 +367,7 @@ export const deleteServiceById = async (req: Request, res: Response) => {
   }
 };
 function safeJsonParse(value: any) {
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     try {
       return JSON.parse(value);
     } catch {
@@ -388,7 +388,9 @@ export const getServiceById = async (req: Request, res: Response) => {
     const service = await prisma.service.findUnique({ where: { id } });
 
     if (!service) {
-      return res.status(404).json({ success: false, message: "Service not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Service not found" });
     }
 
     // Transform the service data with safeJsonParse
@@ -424,7 +426,9 @@ export const deleteBannerById = async (req: Request, res: Response) => {
     const service = await prisma.carousel.findUnique({ where: { id } });
 
     if (!service) {
-      return res.status(404).json({ success: false, message: "Banner not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Banner not found" });
     }
 
     await prisma.carousel.delete({ where: { id } });
@@ -441,4 +445,21 @@ export const deleteBannerById = async (req: Request, res: Response) => {
       error: error.message,
     });
   }
+};
+
+export const updateService = async (id: number, data: {
+    serviceType?: string;
+    heading?: string;
+    subheading?: string;
+    image?: string;
+    image2?: string;
+    image3?: string;
+    feature?: string[];
+    benefit?: string; // JSON string
+    specialization?: string; // JSON string
+}) => {
+    return await prisma.service.update({
+        where: { id },
+        data,
+    });
 };

@@ -22,11 +22,24 @@ app.get("/isValid",isValidUser,(req,res)=>{
 });
 // TO get service image
 app.get("/service", landingController.getServices);
-app.patch("/service", upload.fields([
+
+app.patch("/service/:id", upload.fields([
     { name: "image", maxCount: 1 },
     { name: "image2", maxCount: 1 },
+    { name: "image3", maxCount: 1 },
+
+    { name: "miniImage",maxCount:10 } 
+  ]), landingController.updateService);
+
+
+  app.patch("/service", upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "image2", maxCount: 1 },
+    { name: "image3", maxCount: 1 },
+
     { name: "miniImage",maxCount:10 } 
   ]), landingController.createService);
+
 
 app.delete("/service/:id",isValidUser,  landingController.deleteService);
 app.get("/service/:id",  getServiceById);

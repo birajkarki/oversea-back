@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { landingService } from "../service/landing.service";
+import { landingService, updateService } from "../service/landing.service";
 import cloudinary from "../config/cloudinaryConfig";
 import { prisma } from "../utils/prisma";
 
@@ -104,8 +104,11 @@ class LandingController {
       const image2 = files.image2?.[0]
         ? await uploadToCloudinary(files.image2[0])
         : null;
+        const image3 = files.image3?.[0]
+        ? await uploadToCloudinary(files.image3[0])
+        : null;
 
-      if (!image || !image2 || !serviceType || !heading || !subheading) {
+      if (!image || !image2 || !serviceType || !heading || !subheading || !image3) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -171,6 +174,7 @@ class LandingController {
         subheading,
         image,
         image2,
+        image3,
         feature: parsedFeature,
         benefit: benefit,
         specialization: parsedSpecialization,
@@ -190,6 +194,153 @@ class LandingController {
       });
     }
   };
+
+  getServiceById = async (id: number) => {
+    return await prisma.service.findUnique({
+        where: { id },
+    });
+};
+
+  updateService = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const {
+            serviceType,
+            heading,
+            subheading,
+            feature,
+            benefit,
+            specialization,
+        } = req.body;
+
+        // Check if service exists
+        const existingService = await this.getServiceById(parseInt(id as any));
+        if (!existingService) {
+            return res.status(404).json({ error: "Service not found" });
+        }
+
+        console.log(feature, benefit, specialization);
+
+        const files = req.files as {
+            [fieldname: string]: Express.Multer.File[];
+        };
+
+        const uploadToCloudinary = async (file: Express.Multer.File) => {
+            const uploaded = await cloudinary.uploader.upload(file.path, {
+                folder: "carousel",
+            });
+            return uploaded.secure_url;
+        };
+
+        // Prepare update data object
+        const updateData: any = {};
+
+        // Handle basic fields (only update if provided)
+        if (serviceType !== undefined) updateData.serviceType = serviceType;
+        if (heading !== undefined) updateData.heading = heading;
+        if (subheading !== undefined) updateData.subheading = subheading;
+
+        // Handle image uploads (only if new files are provided)
+        if (files.image?.[0]) {
+            updateData.image = await uploadToCloudinary(files.image[0]);
+        }
+        if (files.image2?.[0]) {
+            updateData.image2 = await uploadToCloudinary(files.image2[0]);
+        }
+        if (files.image3?.[0]) {
+            updateData.image3 = await uploadToCloudinary(files.image3[0]);
+        }
+
+        // Handle miniImages for specialization
+        const miniImageUrls: string[] = [];
+        if (Array.isArray(files.miniImage) && files.miniImage.length > 0) {
+            for (const file of files.miniImage) {
+                try {
+                    const url = await uploadToCloudinary(file);
+                    miniImageUrls.push(url);
+                } catch (err) {
+                    console.error("Error uploading miniImage:", err);
+                    return res.status(500).json({ message: "Mini image upload failed" });
+                }
+            }
+        }
+
+        // Safe JSON parser
+        const safeParse = (data: any, fallback: any[] = []) => {
+            try {
+                if (typeof data === "string") return JSON.parse(data.trim());
+                if (Array.isArray(data)) return JSON.parse(data[0]);
+                return fallback;
+            } catch (err) {
+                return fallback;
+            }
+        };
+
+        // Handle feature updates
+        if (feature !== undefined) {
+            try {
+                const parsedFeature = JSON.parse(feature);
+                if (Array.isArray(parsedFeature)) {
+                    updateData.feature = parsedFeature;
+                } else {
+                    return res.status(400).json({ error: "feature must be an array" });
+                }
+            } catch (err) {
+                return res.status(400).json({ error: "Invalid feature format" });
+            }
+        }
+
+        // Handle benefit updates
+        if (benefit !== undefined) {
+            const parsedBenefit = safeParse(benefit);
+            if (Array.isArray(parsedBenefit)) {
+                updateData.benefit = JSON.stringify(parsedBenefit);
+            } else {
+                return res.status(400).json({ error: "benefit must be an array" });
+            }
+        }
+
+        // Handle specialization updates
+        if (specialization !== undefined) {
+            let parsedSpecialization = safeParse(specialization);
+            
+            if (Array.isArray(parsedSpecialization)) {
+                // If new miniImages are uploaded, attach them to specialization
+                if (miniImageUrls.length > 0) {
+                    parsedSpecialization = parsedSpecialization.map(
+                        (item: any, index: number) => ({
+                            ...item,
+                            miniImage: miniImageUrls[index] || item.miniImage || null,
+                        })
+                    );
+                }
+                updateData.specialization = JSON.stringify(parsedSpecialization);
+            } else {
+                return res.status(400).json({ error: "specialization must be an array" });
+            }
+        }
+
+        console.log("Update data:", updateData);
+
+        // Update service in database
+        const updatedService = await updateService(parseInt(id as any), updateData);
+
+        return res.status(200).json({
+            success: true,
+            message: "Service updated successfully",
+            data: updatedService,
+        });
+
+    } catch (error: any) {
+        console.error("Error updating service:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to update service.",
+            message: error.message,
+        });
+    }
+};
+
 
   deleteService = async (req: Request, res: Response) => {
     try {

@@ -26,6 +26,7 @@ model User {
 model Carousel {
   id    Int    @id @default(autoincrement())
   image String
+  order Int @default(0)
 }
 
 model Stat {
@@ -47,6 +48,7 @@ model Service {
   subheading      String? 
   image           String?
   image2          String? 
+  image3          String?
   feature         String[] @default([]) // optional with default empty array
   benefit         Json?    @default("[]") // optional JSON, default to empty array
   specialization  Json?    @default("[]") // optional JSON, default to empty array
