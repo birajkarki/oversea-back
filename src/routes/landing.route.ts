@@ -11,6 +11,7 @@ app.get("/carousel", landingController.getCarousel);
 // To create or update the homepage banner image
 app.patch("/carousel",isValidUser, upload.array("image"), landingController.createCarousel);
 app.delete("/carousel/:id",isValidUser,deleteBannerById);
+app.post("/carousel/reorder",landingController.reorderBanner);
 
 // To get the stat in landing page
 app.get("/stat", landingController.getStat);
@@ -44,6 +45,7 @@ app.patch("/service/:id", upload.fields([
 app.delete("/service/:id",isValidUser,  landingController.deleteService);
 app.get("/service/:id",  getServiceById);
 
+
 // To get partner logos
 app.get("/partner", landingController.getPartners);
 app.patch("/partner",isValidUser,  upload.array("image"), landingController.patchPartner);
@@ -54,7 +56,7 @@ app.get("/team", landingController.getTeam);
 app.post("/team",isValidUser,  upload.array("image"), landingController.postTeam);
 app.patch("/team/:id",isValidUser,  upload.array("image"), landingController.patchTeam);
 app.delete("/team/:id",isValidUser,  landingController.deleteTeam);
-app.post("/team/reorder",landingController.reorder)
+app.post("/team/reorder",landingController.reorder);
 //login
 
 app.post('/login',landingController.login)

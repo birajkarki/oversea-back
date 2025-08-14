@@ -810,6 +810,52 @@ class LandingController {
     }
   }
 
+   async reorderBanner(req: Request, res: Response) {
+  try {
+    const orderData = req.body; // Array of {id: number, order: number}
+    // Validate the request body
+    if (!Array.isArray(orderData)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request format. Expected an array of order data."
+      });
+    }
+
+    // Validate each item in the array
+    for (const item of orderData) {
+      if (!item.id || typeof item.order !== 'number') {
+        return res.status(400).json({
+          success: false,
+          message: "Each item must have an 'id' and 'order' field."
+        });
+      }
+    }
+
+    // Use a transaction to ensure all updates succeed or fail together
+    const updatedBanners = await prisma.$transaction(
+      orderData.map((item: { id: number; order: number }) =>
+        prisma.carousel.update({
+          where: { id: item.id },
+          data: { order: item.order }
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Banner order updated successfully",
+      data: updatedBanners
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while updating Banner order",
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+}
 
   async reorder(req: Request, res: Response) {
   try {
