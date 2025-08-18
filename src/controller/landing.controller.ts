@@ -104,11 +104,18 @@ class LandingController {
       const image2 = files.image2?.[0]
         ? await uploadToCloudinary(files.image2[0])
         : null;
-        const image3 = files.image3?.[0]
+      const image3 = files.image3?.[0]
         ? await uploadToCloudinary(files.image3[0])
         : null;
 
-      if (!image || !image2 || !serviceType || !heading || !subheading || !image3) {
+      if (
+        !image ||
+        !image2 ||
+        !serviceType ||
+        !heading ||
+        !subheading ||
+        !image3
+      ) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -151,22 +158,20 @@ class LandingController {
         !Array.isArray(parsedBenefit) ||
         !Array.isArray(parsedSpecialization)
       ) {
-        return res
-          .status(400)
-          .json({
-            error: "feature, benefit, and specialization must be arrays",
-          });
+        return res.status(400).json({
+          error: "feature, benefit, and specialization must be arrays",
+        });
       }
 
       // Attach miniImage URLs to specialization
       parsedSpecialization = parsedSpecialization.map(
         (item: any, index: number) => ({
           ...item,
-          miniImage: miniImageUrls[index] || null,
+          image: miniImageUrls[index] || null,
         })
       );
-      parsedSpecialization = JSON.stringify(parsedSpecialization);
-      console.log(parsedSpecialization);
+      parsedSpecialization = parsedSpecialization;
+
       // Save to DB
       const created = await landingService.createService({
         serviceType,
@@ -195,153 +200,281 @@ class LandingController {
     }
   };
 
+  updateSpecialization = async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        return res.status(400).json({ error: "Please provide an id" });
+      }
+
+      const { title, description } = req.body;
+      console.log(title);
+      const files = req.files as {
+        [fieldname: string]: Express.Multer.File[];
+      };
+
+      // Cloudinary uploader
+      const uploadToCloudinary = async (file: Express.Multer.File) => {
+        const uploaded = await cloudinary.uploader.upload(file.path, {
+          folder: "carousel",
+        });
+        return uploaded.secure_url;
+      };
+
+      // Handle optional image
+      let image: string | undefined;
+      if (files?.image?.[0]) {
+        image = await uploadToCloudinary(files.image[0]);
+      } else if (req.body.image) {
+        image = req.body.image; // fallback to existing image passed in body
+      }
+      console.log(image);
+      // Update record
+      const updated = await prisma.specialization.update({
+        where: { id: +id },
+        data: {
+          title,
+          description,
+          ...(image && { image }), // only set image if exists
+        },
+      });
+      console.log(updated);
+
+      return res.json(updated);
+    } catch (error: any) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ error: error.message || "Something went wrong" });
+    }
+  };
+
+  uploadSpecialization = async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!id) {
+        return res.status(400).json({ error: "Please provide an id" });
+      }
+
+      const { title, description } = req.body;
+      console.log(title);
+      const files = req.files as {
+        [fieldname: string]: Express.Multer.File[];
+      };
+
+      // Cloudinary uploader
+      const uploadToCloudinary = async (file: Express.Multer.File) => {
+        const uploaded = await cloudinary.uploader.upload(file.path, {
+          folder: "carousel",
+        });
+        return uploaded.secure_url;
+      };
+
+      // Handle optional image
+      let image:any;
+      if (files?.image?.[0]) {
+        image = await uploadToCloudinary(files.image[0]);
+      } 
+      
+     const updated = await prisma.service.update({
+  where: { id: +id },
+  data: {
+    specialization: {
+      create: {
+        title,
+        description,
+        image
+      },
+    },
+  },
+});
+
+      console.log(updated);
+
+      return res.json(updated);
+    } catch (error: any) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ error: error.message || "Something went wrong" });
+    }
+  };
+
   getServiceById = async (id: number) => {
     return await prisma.service.findUnique({
-        where: { id },
+      where: { id },
     });
-};
+  };
 
   updateService = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const {
-            serviceType,
-            heading,
-            subheading,
-            feature,
-            benefit,
-            specialization,
-        } = req.body;
+      const { id } = req.params;
+      const {
+        serviceType,
+        heading,
+        subheading,
+        feature,
+        benefit,
+        specialization,
+      } = req.body;
 
-        // Check if service exists
-        const existingService = await this.getServiceById(parseInt(id as any));
-        if (!existingService) {
-            return res.status(404).json({ error: "Service not found" });
-        }
+      // Check if service exists
+      const existingService = await this.getServiceById(parseInt(id as any));
+      if (!existingService) {
+        return res.status(404).json({ error: "Service not found" });
+      }
 
-        console.log(feature, benefit, specialization);
+      console.log(feature, benefit, specialization);
 
-        const files = req.files as {
-            [fieldname: string]: Express.Multer.File[];
-        };
+      const files = req.files as {
+        [fieldname: string]: Express.Multer.File[];
+      };
 
-        const uploadToCloudinary = async (file: Express.Multer.File) => {
-            const uploaded = await cloudinary.uploader.upload(file.path, {
-                folder: "carousel",
-            });
-            return uploaded.secure_url;
-        };
-
-        // Prepare update data object
-        const updateData: any = {};
-
-        // Handle basic fields (only update if provided)
-        if (serviceType !== undefined) updateData.serviceType = serviceType;
-        if (heading !== undefined) updateData.heading = heading;
-        if (subheading !== undefined) updateData.subheading = subheading;
-
-        // Handle image uploads (only if new files are provided)
-        if (files.image?.[0]) {
-            updateData.image = await uploadToCloudinary(files.image[0]);
-        }
-        if (files.image2?.[0]) {
-            updateData.image2 = await uploadToCloudinary(files.image2[0]);
-        }
-        if (files.image3?.[0]) {
-            updateData.image3 = await uploadToCloudinary(files.image3[0]);
-        }
-
-        // Handle miniImages for specialization
-        const miniImageUrls: string[] = [];
-        if (Array.isArray(files.miniImage) && files.miniImage.length > 0) {
-            for (const file of files.miniImage) {
-                try {
-                    const url = await uploadToCloudinary(file);
-                    miniImageUrls.push(url);
-                } catch (err) {
-                    console.error("Error uploading miniImage:", err);
-                    return res.status(500).json({ message: "Mini image upload failed" });
-                }
-            }
-        }
-
-        // Safe JSON parser
-        const safeParse = (data: any, fallback: any[] = []) => {
-            try {
-                if (typeof data === "string") return JSON.parse(data.trim());
-                if (Array.isArray(data)) return JSON.parse(data[0]);
-                return fallback;
-            } catch (err) {
-                return fallback;
-            }
-        };
-
-        // Handle feature updates
-        if (feature !== undefined) {
-            try {
-                const parsedFeature = JSON.parse(feature);
-                if (Array.isArray(parsedFeature)) {
-                    updateData.feature = parsedFeature;
-                } else {
-                    return res.status(400).json({ error: "feature must be an array" });
-                }
-            } catch (err) {
-                return res.status(400).json({ error: "Invalid feature format" });
-            }
-        }
-
-        // Handle benefit updates
-        if (benefit !== undefined) {
-            const parsedBenefit = safeParse(benefit);
-            if (Array.isArray(parsedBenefit)) {
-                updateData.benefit = JSON.stringify(parsedBenefit);
-            } else {
-                return res.status(400).json({ error: "benefit must be an array" });
-            }
-        }
-
-        // Handle specialization updates
-        if (specialization !== undefined) {
-            let parsedSpecialization = safeParse(specialization);
-            
-            if (Array.isArray(parsedSpecialization)) {
-                // If new miniImages are uploaded, attach them to specialization
-                if (miniImageUrls.length > 0) {
-                    parsedSpecialization = parsedSpecialization.map(
-                        (item: any, index: number) => ({
-                            ...item,
-                            miniImage: miniImageUrls[index] || item.miniImage || null,
-                        })
-                    );
-                }
-                updateData.specialization = JSON.stringify(parsedSpecialization);
-            } else {
-                return res.status(400).json({ error: "specialization must be an array" });
-            }
-        }
-
-        console.log("Update data:", updateData);
-
-        // Update service in database
-        const updatedService = await updateService(parseInt(id as any), updateData);
-
-        return res.status(200).json({
-            success: true,
-            message: "Service updated successfully",
-            data: updatedService,
+      const uploadToCloudinary = async (file: Express.Multer.File) => {
+        const uploaded = await cloudinary.uploader.upload(file.path, {
+          folder: "carousel",
         });
+        return uploaded.secure_url;
+      };
 
+      // Prepare update data object
+      const updateData: any = {};
+
+      // Handle basic fields (only update if provided)
+      if (serviceType !== undefined) updateData.serviceType = serviceType;
+      if (heading !== undefined) updateData.heading = heading;
+      if (subheading !== undefined) updateData.subheading = subheading;
+
+      // Handle image uploads (only if new files are provided)
+      if (files.image?.[0]) {
+        updateData.image = await uploadToCloudinary(files.image[0]);
+      }
+      if (files.image2?.[0]) {
+        updateData.image2 = await uploadToCloudinary(files.image2[0]);
+      }
+      if (files.image3?.[0]) {
+        updateData.image3 = await uploadToCloudinary(files.image3[0]);
+      }
+
+      // Handle miniImages for specialization
+      const miniImageUrls: string[] = [];
+      if (Array.isArray(files.miniImage) && files.miniImage.length > 0) {
+        for (const file of files.miniImage) {
+          try {
+            const url = await uploadToCloudinary(file);
+            miniImageUrls.push(url);
+          } catch (err) {
+            console.error("Error uploading miniImage:", err);
+            return res
+              .status(500)
+              .json({ message: "Mini image upload failed" });
+          }
+        }
+      }
+
+      // Safe JSON parser
+      const safeParse = (data: any, fallback: any[] = []) => {
+        try {
+          if (typeof data === "string") return JSON.parse(data.trim());
+          if (Array.isArray(data)) return JSON.parse(data[0]);
+          return fallback;
+        } catch (err) {
+          return fallback;
+        }
+      };
+
+      // Handle feature updates
+      if (feature !== undefined) {
+        try {
+          const parsedFeature = JSON.parse(feature);
+          if (Array.isArray(parsedFeature)) {
+            updateData.feature = parsedFeature;
+          } else {
+            return res.status(400).json({ error: "feature must be an array" });
+          }
+        } catch (err) {
+          return res.status(400).json({ error: "Invalid feature format" });
+        }
+      }
+
+      // Handle benefit updates
+      if (benefit !== undefined) {
+        const parsedBenefit = safeParse(benefit);
+        if (Array.isArray(parsedBenefit)) {
+          updateData.benefit = JSON.stringify(parsedBenefit);
+        } else {
+          return res.status(400).json({ error: "benefit must be an array" });
+        }
+      }
+
+      // Handle specialization updates
+      if (specialization !== undefined) {
+        let parsedSpecialization = safeParse(specialization);
+
+        if (Array.isArray(parsedSpecialization)) {
+          // If new miniImages are uploaded, attach them to specialization
+          if (miniImageUrls.length > 0) {
+            parsedSpecialization = parsedSpecialization.map(
+              (item: any, index: number) => ({
+                ...item,
+                miniImage: miniImageUrls[index] || item.miniImage || null,
+              })
+            );
+          }
+          updateData.specialization = JSON.stringify(parsedSpecialization);
+        } else {
+          return res
+            .status(400)
+            .json({ error: "specialization must be an array" });
+        }
+      }
+
+      console.log("Update data:", updateData);
+
+      // Update service in database
+      const updatedService = await updateService(
+        parseInt(id as any),
+        updateData
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Service updated successfully",
+        data: updatedService,
+      });
     } catch (error: any) {
-        console.error("Error updating service:", error);
-        return res.status(500).json({
-            success: false,
-            error: "Failed to update service.",
-            message: error.message,
-        });
+      console.error("Error updating service:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to update service.",
+        message: error.message,
+      });
     }
-};
+  };
 
+    deleteSpecialization= async (req: Request, res: Response) => {
+    try {
+      const idParam = req.params.id;
 
+      if (!idParam) {
+        return res.status(400).json({ error: "ID parameter is required" });
+      }
+
+      const id = parseInt(idParam, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "ID parameter must be a number" });
+      }
+
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const deleted = await prisma.specialization.delete({where:{id:+id}})
+      return res.json({ message: "Specialization deleted", deleted });
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to delete specialization." });
+    }
+  };
   deleteService = async (req: Request, res: Response) => {
     try {
       const idParam = req.params.id;
@@ -810,99 +943,97 @@ class LandingController {
     }
   }
 
-   async reorderBanner(req: Request, res: Response) {
-  try {
-    const orderData = req.body; // Array of {id: number, order: number}
-    // Validate the request body
-    if (!Array.isArray(orderData)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid request format. Expected an array of order data."
-      });
-    }
-
-    // Validate each item in the array
-    for (const item of orderData) {
-      if (!item.id || typeof item.order !== 'number') {
+  async reorderBanner(req: Request, res: Response) {
+    try {
+      const orderData = req.body; // Array of {id: number, order: number}
+      // Validate the request body
+      if (!Array.isArray(orderData)) {
         return res.status(400).json({
           success: false,
-          message: "Each item must have an 'id' and 'order' field."
+          message: "Invalid request format. Expected an array of order data.",
         });
       }
+
+      // Validate each item in the array
+      for (const item of orderData) {
+        if (!item.id || typeof item.order !== "number") {
+          return res.status(400).json({
+            success: false,
+            message: "Each item must have an 'id' and 'order' field.",
+          });
+        }
+      }
+
+      // Use a transaction to ensure all updates succeed or fail together
+      const updatedBanners = await prisma.$transaction(
+        orderData.map((item: { id: number; order: number }) =>
+          prisma.carousel.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Banner order updated successfully",
+        data: updatedBanners,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while updating Banner order",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
     }
-
-    // Use a transaction to ensure all updates succeed or fail together
-    const updatedBanners = await prisma.$transaction(
-      orderData.map((item: { id: number; order: number }) =>
-        prisma.carousel.update({
-          where: { id: item.id },
-          data: { order: item.order }
-        })
-      )
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Banner order updated successfully",
-      data: updatedBanners
-    });
-
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error while updating Banner order",
-      error: process.env.NODE_ENV === 'development' ? error : undefined
-    });
   }
-}
 
   async reorder(req: Request, res: Response) {
-  try {
-    const orderData = req.body; // Array of {id: number, order: number}
-    // Validate the request body
-    if (!Array.isArray(orderData)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid request format. Expected an array of order data."
-      });
-    }
-
-    // Validate each item in the array
-    for (const item of orderData) {
-      if (!item.id || typeof item.order !== 'number') {
+    try {
+      const orderData = req.body; // Array of {id: number, order: number}
+      // Validate the request body
+      if (!Array.isArray(orderData)) {
         return res.status(400).json({
           success: false,
-          message: "Each item must have an 'id' and 'order' field."
+          message: "Invalid request format. Expected an array of order data.",
         });
       }
+
+      // Validate each item in the array
+      for (const item of orderData) {
+        if (!item.id || typeof item.order !== "number") {
+          return res.status(400).json({
+            success: false,
+            message: "Each item must have an 'id' and 'order' field.",
+          });
+        }
+      }
+
+      // Use a transaction to ensure all updates succeed or fail together
+      const updatedTeamMembers = await prisma.$transaction(
+        orderData.map((item: { id: number; order: number }) =>
+          prisma.team.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Team order updated successfully",
+        data: updatedTeamMembers,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while updating team order",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
     }
-
-    // Use a transaction to ensure all updates succeed or fail together
-    const updatedTeamMembers = await prisma.$transaction(
-      orderData.map((item: { id: number; order: number }) =>
-        prisma.team.update({
-          where: { id: item.id },
-          data: { order: item.order }
-        })
-      )
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Team order updated successfully",
-      data: updatedTeamMembers
-    });
-
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error while updating team order",
-      error: process.env.NODE_ENV === 'development' ? error : undefined
-    });
   }
-}
 
   async register(req: Request, res: Response) {
     try {
@@ -934,11 +1065,11 @@ class LandingController {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production", // only send over HTTPS
           sameSite: "strict",
-          maxAge: 60 * 60 * 1000,  
+          maxAge: 60 * 60 * 1000,
         });
       }
-      
-      return res.json({...created,token}).status(201);
+
+      return res.json({ ...created, token }).status(201);
     } catch (error) {
       console.log(error);
       return;

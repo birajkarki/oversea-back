@@ -72,30 +72,45 @@ class LandingService {
   }
 
   getAllServices = async () => {
-    const services = await prisma.service.findMany();
+    const services = await prisma.service.findMany({include:{specialization:true}});
 
     return services.map((s) => ({
       ...s,
       benefit: this.safeJsonParse(s.benefit),
-      specialization: this.safeJsonParse(s.specialization),
+      
     }));
   };
 
-  createService = async (data: {
-    image: string;
-    image2: string;
-    image3:string;
-    serviceType: string;
-    heading: string;
-    subheading: string;
-    feature: string[];
-    benefit: Array<{ title: string; subtitle: string }>;
-    specialization: any;
-  }) => {
-    return await prisma.service.create({
-      data,
-    });
-  };
+ createService = async (data: {
+  image: string;
+  image2: string;
+  image3: string;
+  serviceType: string;
+  heading: string;
+  subheading: string;
+  feature: string[];
+  benefit: Array<{ title: string; subtitle: string }>;
+  specialization: Array<{ title: string; description: string; image: string }>;
+}) => {
+  return await prisma.service.create({
+    data: {
+      serviceType: data.serviceType,
+      heading: data.heading,
+      subheading: data.subheading,
+      image: data.image,
+      image2: data.image2,
+      image3: data.image3,
+      feature: data.feature,
+      benefit: data.benefit, // Prisma supports Json
+      specialization: {
+        create: data.specialization, // 👈 nested create
+      },
+    },
+    include: {
+      specialization: true, // return nested
+    },
+  });
+};
 
   deleteService = async (id: number) => {
     return await prisma.service.delete({ where: { id } });
@@ -385,7 +400,7 @@ export const getServiceById = async (req: Request, res: Response) => {
   }
 
   try {
-    const service = await prisma.service.findUnique({ where: { id } });
+    const service = await prisma.service.findUnique({ where: { id },include:{specialization:true} });
 
     if (!service) {
       return res
@@ -397,7 +412,7 @@ export const getServiceById = async (req: Request, res: Response) => {
     const transformedService = {
       ...service,
       benefit: safeJsonParse(service.benefit),
-      specialization: safeJsonParse(service.specialization),
+      
     };
 
     return res.status(200).json({
@@ -456,7 +471,7 @@ export const updateService = async (id: number, data: {
     image3?: string;
     feature?: string[];
     benefit?: string; // JSON string
-    specialization?: string; // JSON string
+     
 }) => {
     return await prisma.service.update({
         where: { id },

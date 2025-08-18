@@ -41,6 +41,11 @@ app.patch("/service/:id", upload.fields([
     { name: "miniImage",maxCount:10 } 
   ]), landingController.createService);
 
+  app.patch("/specialization/:id",upload.fields([{name:'image',maxCount:1}]),landingController.updateSpecialization)
+
+  app.post("/specialization/:id",upload.fields([{name:'image',maxCount:1}]),landingController.uploadSpecialization)
+
+app.delete("/specialization/:id",isValidUser,  landingController.deleteSpecialization);
 
 app.delete("/service/:id",isValidUser,  landingController.deleteService);
 app.get("/service/:id",  getServiceById);

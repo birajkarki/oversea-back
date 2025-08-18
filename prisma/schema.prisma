@@ -6,27 +6,26 @@
 
 generator client {
   provider = "prisma-client-js"
-     
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  name String
-  email String
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String
   password String
-  role String @default("ADMIN")
-  token String @default("")
-
+  role     String @default("ADMIN")
+  token    String @default("")
 }
 
 model Carousel {
   id    Int    @id @default(autoincrement())
   image String
-  order Int @default(0)
+  order Int    @default(0)
 }
 
 model Stat {
@@ -42,18 +41,27 @@ model Stat {
 }
 
 model Service {
-  id              Int      @id @default(autoincrement())
-  serviceType     String
-  heading         String?
-  subheading      String? 
-  image           String?
-  image2          String? 
-  image3          String?
-  feature         String[] @default([]) // optional with default empty array
-  benefit         Json?    @default("[]") // optional JSON, default to empty array
-  specialization  Json?    @default("[]") // optional JSON, default to empty array
+  id             Int              @id @default(autoincrement())
+  serviceType    String
+  heading        String?
+  subheading     String?
+  image          String?
+  image2         String?
+  image3         String?
+  feature        String[]         @default([]) // optional with default empty array
+  benefit        Json?            @default("[]") // optional JSON, default to empty array
+ 
+  specialization Specialization[]
 }
 
+model Specialization {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  image       String
+  serviceId   Int
+  service     Service @relation(fields: [serviceId], references: [id],onDelete: Cascade)
+}
 
 model Partner {
   id    Int    @id @default(autoincrement())
@@ -64,7 +72,7 @@ model Team {
   id         Int      @id @default(autoincrement())
   name       String
   address    String
-  order      Int      @default(0) 
+  order      Int      @default(0)
   role       String
   title      String
   linkedin   String
@@ -75,12 +83,12 @@ model Team {
 }
 
 model Testimonial {
-  id        Int      @id @default(autoincrement())
-  logo      String
-  title     String
-  subtitle  String
-  content String
-  
+  id       Int    @id @default(autoincrement())
+  logo     String
+  title    String
+  subtitle String
+  content  String
+
   createdAt DateTime @default(now())
 }
 
@@ -118,9 +126,8 @@ model Career {
 model Feedback {
   id        Int      @id @default(autoincrement())
   fullName  String
-  phone    String
+  phone     String
   email     String
   message   String
   createdAt DateTime @default(now())
 }
-
