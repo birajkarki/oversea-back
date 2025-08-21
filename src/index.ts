@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 4000;
 
 // CORS configuration
 const corsOptions = {
-  origin: ['https://sadiksha.com.np', 'http://localhost:3000'], // Allow both production and local development
+  origin: ['https://sadiksha.com.np', 'http://localhost:3000','https://www.sadiksha.com.np'], // Allow both production and local development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
