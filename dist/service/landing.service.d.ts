@@ -4,10 +4,12 @@ declare class LandingService {
     createCarousel(image: string): Promise<{
         id: number;
         image: string;
+        order: number;
     }>;
     getCarousel(): Promise<{
         id: number;
         image: string;
+        order: number;
     }[]>;
     getStat: () => Promise<{
         id: number;
@@ -41,18 +43,26 @@ declare class LandingService {
     safeJsonParse(value: any): any;
     getAllServices: () => Promise<{
         benefit: any;
-        specialization: any;
+        specialization: {
+            id: number;
+            image: string;
+            title: string;
+            description: string;
+            serviceId: number;
+        }[];
         id: number;
         image: string | null;
         serviceType: string;
         heading: string | null;
         subheading: string | null;
         image2: string | null;
+        image3: string | null;
         feature: string[];
     }[]>;
     createService: (data: {
         image: string;
         image2: string;
+        image3: string;
         serviceType: string;
         heading: string;
         subheading: string;
@@ -61,17 +71,29 @@ declare class LandingService {
             title: string;
             subtitle: string;
         }>;
-        specialization: any;
+        specialization: Array<{
+            title: string;
+            description: string;
+            image: string;
+        }>;
     }) => Promise<{
+        specialization: {
+            id: number;
+            image: string;
+            title: string;
+            description: string;
+            serviceId: number;
+        }[];
+    } & {
         id: number;
         image: string | null;
         serviceType: string;
         heading: string | null;
         subheading: string | null;
         image2: string | null;
+        image3: string | null;
         feature: string[];
         benefit: import("@prisma/client/runtime/library").JsonValue | null;
-        specialization: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     deleteService: (id: number) => Promise<{
         id: number;
@@ -80,9 +102,9 @@ declare class LandingService {
         heading: string | null;
         subheading: string | null;
         image2: string | null;
+        image3: string | null;
         feature: string[];
         benefit: import("@prisma/client/runtime/library").JsonValue | null;
-        specialization: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
     getAllPartners: () => Promise<{
         id: number;
@@ -103,11 +125,11 @@ declare class LandingService {
         name: string;
         email: string;
         role: string;
+        order: number;
         title: string;
         createdAt: Date;
         link: string;
         address: string;
-        order: number;
         linkedin: string;
         profileImg: string;
     }[]>;
@@ -125,11 +147,11 @@ declare class LandingService {
         name: string;
         email: string;
         role: string;
+        order: number;
         title: string;
         createdAt: Date;
         link: string;
         address: string;
-        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -147,11 +169,11 @@ declare class LandingService {
         name: string;
         email: string;
         role: string;
+        order: number;
         title: string;
         createdAt: Date;
         link: string;
         address: string;
-        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -160,11 +182,11 @@ declare class LandingService {
         name: string;
         email: string;
         role: string;
+        order: number;
         title: string;
         createdAt: Date;
         link: string;
         address: string;
-        order: number;
         linkedin: string;
         profileImg: string;
     }>;
@@ -321,5 +343,25 @@ export declare const landingService: LandingService;
 export declare const deleteServiceById: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 export declare const getServiceById: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 export declare const deleteBannerById: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+export declare const updateService: (id: number, data: {
+    serviceType?: string;
+    heading?: string;
+    subheading?: string;
+    image?: string;
+    image2?: string;
+    image3?: string;
+    feature?: string[];
+    benefit?: string;
+}) => Promise<{
+    id: number;
+    image: string | null;
+    serviceType: string;
+    heading: string | null;
+    subheading: string | null;
+    image2: string | null;
+    image3: string | null;
+    feature: string[];
+    benefit: import("@prisma/client/runtime/library").JsonValue | null;
+}>;
 export {};
 //# sourceMappingURL=landing.service.d.ts.map

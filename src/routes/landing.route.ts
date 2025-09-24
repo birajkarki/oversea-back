@@ -104,4 +104,12 @@ app.post("/feedback", landingController.createFeedback);
 app.get("/overview", landingController.getOverview);
 
 
+// adding advertisement
+
+app.get("/advertisement",landingController.getAllAdvertisement)
+app.post("/advertisement",upload.single("image"),landingController.postAdvertisement)
+app.delete("/advertisement",landingController.deleteAdvertisement) // id in body
+app.get("/advertisement",landingController.getAdvertisementById) //id in body
+
+
 export default app;

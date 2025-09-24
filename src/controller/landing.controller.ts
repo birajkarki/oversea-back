@@ -271,23 +271,23 @@ class LandingController {
       };
 
       // Handle optional image
-      let image:any;
+      let image: any;
       if (files?.image?.[0]) {
         image = await uploadToCloudinary(files.image[0]);
-      } 
-      
-     const updated = await prisma.service.update({
-  where: { id: +id },
-  data: {
-    specialization: {
-      create: {
-        title,
-        description,
-        image
-      },
-    },
-  },
-});
+      }
+
+      const updated = await prisma.service.update({
+        where: { id: +id },
+        data: {
+          specialization: {
+            create: {
+              title,
+              description,
+              image,
+            },
+          },
+        },
+      });
 
       console.log(updated);
 
@@ -452,7 +452,7 @@ class LandingController {
     }
   };
 
-    deleteSpecialization= async (req: Request, res: Response) => {
+  deleteSpecialization = async (req: Request, res: Response) => {
     try {
       const idParam = req.params.id;
 
@@ -469,10 +469,14 @@ class LandingController {
         return res.status(400).json({ error: "Invalid ID" });
       }
 
-      const deleted = await prisma.specialization.delete({where:{id:+id}})
+      const deleted = await prisma.specialization.delete({
+        where: { id: +id },
+      });
       return res.json({ message: "Specialization deleted", deleted });
     } catch (error) {
-      return res.status(500).json({ error: "Failed to delete specialization." });
+      return res
+        .status(500)
+        .json({ error: "Failed to delete specialization." });
     }
   };
   deleteService = async (req: Request, res: Response) => {
@@ -1030,6 +1034,121 @@ class LandingController {
       return res.status(500).json({
         success: false,
         message: "Internal server error while updating team order",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
+    }
+  }
+
+
+  // Advertisement
+  async getAllAdvertisement(req: Request, res: Response) {
+    try {
+      const advertisements =await prisma.advertisement.findMany({
+        include:{
+          Service:true
+        }
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Advertisement retrieved successfully",
+        data: advertisements,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while retrieving advertisements",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
+    }
+  }
+
+  async postAdvertisement(req: Request, res: Response) {
+    try {
+      const {title,serviceId}=req.body;
+      const file = req.file;
+      console.log(file)
+      if (!file) {
+        return res.status(400).json({ message: "Advertisement file is required" });
+      }
+      const image = file;
+      if (!image?.path) {
+        console.error("No path found in uploaded file");
+        return res.status(500).json({ message: "Advertisement upload failed" });
+      }
+      const advertisement = await prisma.advertisement.create({
+        data: {
+          title,
+          serviceId: +serviceId,
+          image: image.path
+        }
+      })
+      return res.status(201).json({
+        success: true,
+        message: "Advertisement posted successfully",
+        data: advertisement,
+      }); 
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while posting advertisement",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
+    }
+  }
+
+  async deleteAdvertisement(req: Request, res: Response) {
+    try {
+      const id = req.body.id;
+      if (!id) {
+        return res.status(400).json({ message: "Advertisement ID is required" });
+      }
+
+      const deletedAdvertisement = await prisma.advertisement.delete({
+        where: { id },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Advertisement deleted successfully",
+        data: deletedAdvertisement,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while deleting advertisement",
+        error: process.env.NODE_ENV === "development" ? error : undefined,
+      });
+    }
+  }
+  async getAdvertisementById(req: Request, res: Response) {
+    try {
+      
+      const id = +req.body.id;
+      if (!id) {
+        return res.status(400).json({ message: "Advertisement ID is required" });
+      }
+
+      const advertisement = await prisma.advertisement.findFirst({
+        where: { id },
+      });
+
+      if (!advertisement) {
+        return res.status(404).json({ message: "Advertisement not found" });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Advertisement retrieved successfully",
+        data: advertisement,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while retrieving advertisement",
         error: process.env.NODE_ENV === "development" ? error : undefined,
       });
     }

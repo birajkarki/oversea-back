@@ -400,7 +400,7 @@ export const getServiceById = async (req: Request, res: Response) => {
   }
 
   try {
-    const service = await prisma.service.findUnique({ where: { id },include:{specialization:true} });
+    const service = await prisma.service.findUnique({ where: { id },include:{specialization:true,advertisements:true} });
 
     if (!service) {
       return res

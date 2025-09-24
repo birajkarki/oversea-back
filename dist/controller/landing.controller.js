@@ -53,7 +53,15 @@ class LandingController {
                 const image2 = files.image2?.[0]
                     ? await uploadToCloudinary(files.image2[0])
                     : null;
-                if (!image || !image2 || !serviceType || !heading || !subheading) {
+                const image3 = files.image3?.[0]
+                    ? await uploadToCloudinary(files.image3[0])
+                    : null;
+                if (!image ||
+                    !image2 ||
+                    !serviceType ||
+                    !heading ||
+                    !subheading ||
+                    !image3) {
                     return res.status(400).json({ error: "Missing required fields" });
                 }
                 const miniImageUrls = [];
@@ -93,24 +101,22 @@ class LandingController {
                 if (!Array.isArray(parsedFeature) ||
                     !Array.isArray(parsedBenefit) ||
                     !Array.isArray(parsedSpecialization)) {
-                    return res
-                        .status(400)
-                        .json({
+                    return res.status(400).json({
                         error: "feature, benefit, and specialization must be arrays",
                     });
                 }
                 parsedSpecialization = parsedSpecialization.map((item, index) => ({
                     ...item,
-                    miniImage: miniImageUrls[index] || null,
+                    image: miniImageUrls[index] || null,
                 }));
-                parsedSpecialization = JSON.stringify(parsedSpecialization);
-                console.log(parsedSpecialization);
+                parsedSpecialization = parsedSpecialization;
                 const created = await landing_service_1.landingService.createService({
                     serviceType,
                     heading,
                     subheading,
                     image,
                     image2,
+                    image3,
                     feature: parsedFeature,
                     benefit: benefit,
                     specialization: parsedSpecialization,
@@ -128,6 +134,233 @@ class LandingController {
                     error: "Failed to create service.",
                     message: error.message,
                 });
+            }
+        };
+        this.updateSpecialization = async (req, res) => {
+            try {
+                const id = req.params.id;
+                if (!id) {
+                    return res.status(400).json({ error: "Please provide an id" });
+                }
+                const { title, description } = req.body;
+                console.log(title);
+                const files = req.files;
+                const uploadToCloudinary = async (file) => {
+                    const uploaded = await cloudinaryConfig_1.default.uploader.upload(file.path, {
+                        folder: "carousel",
+                    });
+                    return uploaded.secure_url;
+                };
+                let image;
+                if (files?.image?.[0]) {
+                    image = await uploadToCloudinary(files.image[0]);
+                }
+                else if (req.body.image) {
+                    image = req.body.image;
+                }
+                console.log(image);
+                const updated = await prisma_1.prisma.specialization.update({
+                    where: { id: +id },
+                    data: {
+                        title,
+                        description,
+                        ...(image && { image }),
+                    },
+                });
+                console.log(updated);
+                return res.json(updated);
+            }
+            catch (error) {
+                console.error(error);
+                return res
+                    .status(500)
+                    .json({ error: error.message || "Something went wrong" });
+            }
+        };
+        this.uploadSpecialization = async (req, res) => {
+            try {
+                const id = req.params.id;
+                if (!id) {
+                    return res.status(400).json({ error: "Please provide an id" });
+                }
+                const { title, description } = req.body;
+                console.log(title);
+                const files = req.files;
+                const uploadToCloudinary = async (file) => {
+                    const uploaded = await cloudinaryConfig_1.default.uploader.upload(file.path, {
+                        folder: "carousel",
+                    });
+                    return uploaded.secure_url;
+                };
+                let image;
+                if (files?.image?.[0]) {
+                    image = await uploadToCloudinary(files.image[0]);
+                }
+                const updated = await prisma_1.prisma.service.update({
+                    where: { id: +id },
+                    data: {
+                        specialization: {
+                            create: {
+                                title,
+                                description,
+                                image,
+                            },
+                        },
+                    },
+                });
+                console.log(updated);
+                return res.json(updated);
+            }
+            catch (error) {
+                console.error(error);
+                return res
+                    .status(500)
+                    .json({ error: error.message || "Something went wrong" });
+            }
+        };
+        this.getServiceById = async (id) => {
+            return await prisma_1.prisma.service.findUnique({
+                where: { id },
+            });
+        };
+        this.updateService = async (req, res) => {
+            try {
+                const { id } = req.params;
+                const { serviceType, heading, subheading, feature, benefit, specialization, } = req.body;
+                const existingService = await this.getServiceById(parseInt(id));
+                if (!existingService) {
+                    return res.status(404).json({ error: "Service not found" });
+                }
+                console.log(feature, benefit, specialization);
+                const files = req.files;
+                const uploadToCloudinary = async (file) => {
+                    const uploaded = await cloudinaryConfig_1.default.uploader.upload(file.path, {
+                        folder: "carousel",
+                    });
+                    return uploaded.secure_url;
+                };
+                const updateData = {};
+                if (serviceType !== undefined)
+                    updateData.serviceType = serviceType;
+                if (heading !== undefined)
+                    updateData.heading = heading;
+                if (subheading !== undefined)
+                    updateData.subheading = subheading;
+                if (files.image?.[0]) {
+                    updateData.image = await uploadToCloudinary(files.image[0]);
+                }
+                if (files.image2?.[0]) {
+                    updateData.image2 = await uploadToCloudinary(files.image2[0]);
+                }
+                if (files.image3?.[0]) {
+                    updateData.image3 = await uploadToCloudinary(files.image3[0]);
+                }
+                const miniImageUrls = [];
+                if (Array.isArray(files.miniImage) && files.miniImage.length > 0) {
+                    for (const file of files.miniImage) {
+                        try {
+                            const url = await uploadToCloudinary(file);
+                            miniImageUrls.push(url);
+                        }
+                        catch (err) {
+                            console.error("Error uploading miniImage:", err);
+                            return res
+                                .status(500)
+                                .json({ message: "Mini image upload failed" });
+                        }
+                    }
+                }
+                const safeParse = (data, fallback = []) => {
+                    try {
+                        if (typeof data === "string")
+                            return JSON.parse(data.trim());
+                        if (Array.isArray(data))
+                            return JSON.parse(data[0]);
+                        return fallback;
+                    }
+                    catch (err) {
+                        return fallback;
+                    }
+                };
+                if (feature !== undefined) {
+                    try {
+                        const parsedFeature = JSON.parse(feature);
+                        if (Array.isArray(parsedFeature)) {
+                            updateData.feature = parsedFeature;
+                        }
+                        else {
+                            return res.status(400).json({ error: "feature must be an array" });
+                        }
+                    }
+                    catch (err) {
+                        return res.status(400).json({ error: "Invalid feature format" });
+                    }
+                }
+                if (benefit !== undefined) {
+                    const parsedBenefit = safeParse(benefit);
+                    if (Array.isArray(parsedBenefit)) {
+                        updateData.benefit = JSON.stringify(parsedBenefit);
+                    }
+                    else {
+                        return res.status(400).json({ error: "benefit must be an array" });
+                    }
+                }
+                if (specialization !== undefined) {
+                    let parsedSpecialization = safeParse(specialization);
+                    if (Array.isArray(parsedSpecialization)) {
+                        if (miniImageUrls.length > 0) {
+                            parsedSpecialization = parsedSpecialization.map((item, index) => ({
+                                ...item,
+                                miniImage: miniImageUrls[index] || item.miniImage || null,
+                            }));
+                        }
+                        updateData.specialization = JSON.stringify(parsedSpecialization);
+                    }
+                    else {
+                        return res
+                            .status(400)
+                            .json({ error: "specialization must be an array" });
+                    }
+                }
+                console.log("Update data:", updateData);
+                const updatedService = await (0, landing_service_1.updateService)(parseInt(id), updateData);
+                return res.status(200).json({
+                    success: true,
+                    message: "Service updated successfully",
+                    data: updatedService,
+                });
+            }
+            catch (error) {
+                console.error("Error updating service:", error);
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to update service.",
+                    message: error.message,
+                });
+            }
+        };
+        this.deleteSpecialization = async (req, res) => {
+            try {
+                const idParam = req.params.id;
+                if (!idParam) {
+                    return res.status(400).json({ error: "ID parameter is required" });
+                }
+                const id = parseInt(idParam, 10);
+                if (isNaN(id)) {
+                    return res.status(400).json({ error: "ID parameter must be a number" });
+                }
+                if (isNaN(id)) {
+                    return res.status(400).json({ error: "Invalid ID" });
+                }
+                const deleted = await prisma_1.prisma.specialization.delete({
+                    where: { id: +id },
+                });
+                return res.json({ message: "Specialization deleted", deleted });
+            }
+            catch (error) {
+                return res
+                    .status(500)
+                    .json({ error: "Failed to delete specialization." });
             }
         };
         this.deleteService = async (req, res) => {
@@ -603,31 +836,67 @@ class LandingController {
             return;
         }
     }
+    async reorderBanner(req, res) {
+        try {
+            const orderData = req.body;
+            if (!Array.isArray(orderData)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid request format. Expected an array of order data.",
+                });
+            }
+            for (const item of orderData) {
+                if (!item.id || typeof item.order !== "number") {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Each item must have an 'id' and 'order' field.",
+                    });
+                }
+            }
+            const updatedBanners = await prisma_1.prisma.$transaction(orderData.map((item) => prisma_1.prisma.carousel.update({
+                where: { id: item.id },
+                data: { order: item.order },
+            })));
+            return res.status(200).json({
+                success: true,
+                message: "Banner order updated successfully",
+                data: updatedBanners,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while updating Banner order",
+                error: process.env.NODE_ENV === "development" ? error : undefined,
+            });
+        }
+    }
     async reorder(req, res) {
         try {
             const orderData = req.body;
             if (!Array.isArray(orderData)) {
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid request format. Expected an array of order data."
+                    message: "Invalid request format. Expected an array of order data.",
                 });
             }
             for (const item of orderData) {
-                if (!item.id || typeof item.order !== 'number') {
+                if (!item.id || typeof item.order !== "number") {
                     return res.status(400).json({
                         success: false,
-                        message: "Each item must have an 'id' and 'order' field."
+                        message: "Each item must have an 'id' and 'order' field.",
                     });
                 }
             }
             const updatedTeamMembers = await prisma_1.prisma.$transaction(orderData.map((item) => prisma_1.prisma.team.update({
                 where: { id: item.id },
-                data: { order: item.order }
+                data: { order: item.order },
             })));
             return res.status(200).json({
                 success: true,
                 message: "Team order updated successfully",
-                data: updatedTeamMembers
+                data: updatedTeamMembers,
             });
         }
         catch (error) {
@@ -635,7 +904,115 @@ class LandingController {
             return res.status(500).json({
                 success: false,
                 message: "Internal server error while updating team order",
-                error: process.env.NODE_ENV === 'development' ? error : undefined
+                error: process.env.NODE_ENV === "development" ? error : undefined,
+            });
+        }
+    }
+    async getAllAdvertisement(req, res) {
+        try {
+            const advertisements = await prisma_1.prisma.advertisement.findMany({
+                include: {
+                    Service: true
+                }
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Advertisement retrieved successfully",
+                data: advertisements,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while retrieving advertisements",
+                error: process.env.NODE_ENV === "development" ? error : undefined,
+            });
+        }
+    }
+    async postAdvertisement(req, res) {
+        try {
+            const { title, serviceId } = req.body;
+            const file = req.file;
+            console.log(file);
+            if (!file) {
+                return res.status(400).json({ message: "Advertisement file is required" });
+            }
+            const image = file;
+            if (!image?.path) {
+                console.error("No path found in uploaded file");
+                return res.status(500).json({ message: "Advertisement upload failed" });
+            }
+            const advertisement = await prisma_1.prisma.advertisement.create({
+                data: {
+                    title,
+                    serviceId: +serviceId,
+                    image: image.path
+                }
+            });
+            return res.status(201).json({
+                success: true,
+                message: "Advertisement posted successfully",
+                data: advertisement,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while posting advertisement",
+                error: process.env.NODE_ENV === "development" ? error : undefined,
+            });
+        }
+    }
+    async deleteAdvertisement(req, res) {
+        try {
+            const id = req.body.id;
+            if (!id) {
+                return res.status(400).json({ message: "Advertisement ID is required" });
+            }
+            const deletedAdvertisement = await prisma_1.prisma.advertisement.delete({
+                where: { id },
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Advertisement deleted successfully",
+                data: deletedAdvertisement,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while deleting advertisement",
+                error: process.env.NODE_ENV === "development" ? error : undefined,
+            });
+        }
+    }
+    async getAdvertisementById(req, res) {
+        try {
+            const id = +req.body.id;
+            if (!id) {
+                return res.status(400).json({ message: "Advertisement ID is required" });
+            }
+            const advertisement = await prisma_1.prisma.advertisement.findFirst({
+                where: { id },
+            });
+            if (!advertisement) {
+                return res.status(404).json({ message: "Advertisement not found" });
+            }
+            return res.status(200).json({
+                success: true,
+                message: "Advertisement retrieved successfully",
+                data: advertisement,
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error while retrieving advertisement",
+                error: process.env.NODE_ENV === "development" ? error : undefined,
             });
         }
     }

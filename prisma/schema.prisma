@@ -41,17 +41,29 @@ model Stat {
 }
 
 model Service {
-  id             Int              @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   serviceType    String
   heading        String?
   subheading     String?
   image          String?
   image2         String?
   image3         String?
-  feature        String[]         @default([]) // optional with default empty array
-  benefit        Json?            @default("[]") // optional JSON, default to empty array
- 
+  feature        String[]        @default([]) // optional with default empty array
+  benefit        Json?           @default("[]") // optional JSON, default to empty array
+  advertisements Advertisement[]
+
   specialization Specialization[]
+}
+
+model Advertisement {
+  id    Int    @id @default(autoincrement())
+  title String
+
+  image String
+
+  createdAt DateTime @default(now())
+  Service   Service? @relation(fields: [serviceId], references: [id])
+  serviceId Int?
 }
 
 model Specialization {
@@ -60,7 +72,7 @@ model Specialization {
   description String
   image       String
   serviceId   Int
-  service     Service @relation(fields: [serviceId], references: [id],onDelete: Cascade)
+  service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 model Partner {

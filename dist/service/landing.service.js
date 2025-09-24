@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBannerById = exports.getServiceById = exports.deleteServiceById = exports.landingService = void 0;
+exports.updateService = exports.deleteBannerById = exports.getServiceById = exports.deleteServiceById = exports.landingService = void 0;
 const prisma_1 = require("../utils/prisma");
 const email_1 = require("../utils/email");
 const bcrypt_1 = require("../utils/bcrypt");
@@ -30,16 +30,30 @@ class LandingService {
             });
         };
         this.getAllServices = async () => {
-            const services = await prisma_1.prisma.service.findMany();
-            return services.map(s => ({
+            const services = await prisma_1.prisma.service.findMany({ include: { specialization: true } });
+            return services.map((s) => ({
                 ...s,
                 benefit: this.safeJsonParse(s.benefit),
-                specialization: this.safeJsonParse(s.specialization),
             }));
         };
         this.createService = async (data) => {
             return await prisma_1.prisma.service.create({
-                data,
+                data: {
+                    serviceType: data.serviceType,
+                    heading: data.heading,
+                    subheading: data.subheading,
+                    image: data.image,
+                    image2: data.image2,
+                    image3: data.image3,
+                    feature: data.feature,
+                    benefit: data.benefit,
+                    specialization: {
+                        create: data.specialization,
+                    },
+                },
+                include: {
+                    specialization: true,
+                },
             });
         };
         this.deleteService = async (id) => {
@@ -60,8 +74,8 @@ class LandingService {
         this.createTeamMember = async (data) => {
             const maxOrderResult = await prisma_1.prisma.team.aggregate({
                 _max: {
-                    order: true
-                }
+                    order: true,
+                },
             });
             const nextOrder = (maxOrderResult._max.order || 0) + 1;
             const team = await prisma_1.prisma.team.create({
@@ -94,7 +108,7 @@ class LandingService {
         return carousel;
     }
     safeJsonParse(value) {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
             try {
                 return JSON.parse(value);
             }
@@ -218,7 +232,9 @@ const deleteServiceById = async (req, res) => {
     try {
         const service = await prisma_1.prisma.service.findUnique({ where: { id } });
         if (!service) {
-            return res.status(404).json({ success: false, message: "Service not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Service not found" });
         }
         await prisma_1.prisma.service.delete({ where: { id } });
         return res.status(200).json({
@@ -237,7 +253,7 @@ const deleteServiceById = async (req, res) => {
 };
 exports.deleteServiceById = deleteServiceById;
 function safeJsonParse(value) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
         try {
             return JSON.parse(value);
         }
@@ -253,14 +269,15 @@ const getServiceById = async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid ID" });
     }
     try {
-        const service = await prisma_1.prisma.service.findUnique({ where: { id } });
+        const service = await prisma_1.prisma.service.findUnique({ where: { id }, include: { specialization: true, advertisements: true } });
         if (!service) {
-            return res.status(404).json({ success: false, message: "Service not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Service not found" });
         }
         const transformedService = {
             ...service,
             benefit: safeJsonParse(service.benefit),
-            specialization: safeJsonParse(service.specialization),
         };
         return res.status(200).json({
             success: true,
@@ -286,7 +303,9 @@ const deleteBannerById = async (req, res) => {
     try {
         const service = await prisma_1.prisma.carousel.findUnique({ where: { id } });
         if (!service) {
-            return res.status(404).json({ success: false, message: "Banner not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Banner not found" });
         }
         await prisma_1.prisma.carousel.delete({ where: { id } });
         return res.status(200).json({
@@ -304,4 +323,11 @@ const deleteBannerById = async (req, res) => {
     }
 };
 exports.deleteBannerById = deleteBannerById;
+const updateService = async (id, data) => {
+    return await prisma_1.prisma.service.update({
+        where: { id },
+        data,
+    });
+};
+exports.updateService = updateService;
 //# sourceMappingURL=landing.service.js.map

@@ -7,6 +7,21 @@ declare class LandingController {
     patchStat: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     getServices: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     createService: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    updateSpecialization: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    uploadSpecialization: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    getServiceById: (id: number) => Promise<{
+        id: number;
+        image: string | null;
+        serviceType: string;
+        heading: string | null;
+        subheading: string | null;
+        image2: string | null;
+        image3: string | null;
+        feature: string[];
+        benefit: import("@prisma/client/runtime/library").JsonValue | null;
+    } | null>;
+    updateService: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    deleteSpecialization: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     deleteService: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     getPartners: (_req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     patchPartner: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
@@ -29,7 +44,12 @@ declare class LandingController {
     createCareer(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     getFeedbacks(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     createFeedback(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    reorderBanner(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     reorder(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    getAllAdvertisement(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    postAdvertisement(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    deleteAdvertisement(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    getAdvertisementById(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     register(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     login(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
