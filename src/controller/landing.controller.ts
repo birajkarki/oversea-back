@@ -1194,6 +1194,49 @@ class LandingController {
       return;
     }
   }
-}
+
+  async postEmployer(req: Request, res: Response) {
+    try {
+      const { companyName, contactPerson, email, phoneNumber, jobTitle, location, requirements, industry, urgency } = req.body;
+
+      const employer = await prisma.employer.create({
+        data: {
+          companyName,
+          contactPerson,
+          email,
+          phoneNumber,
+          jobTitle,
+          location,
+          requirements,
+          industry,
+          urgency
+        }
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Employer posted successfully",
+        data: employer
+      });
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+
+  async getEmployer(req: Request, res: Response) {
+    try {
+      const employers = await prisma.employer.findMany();
+      return res.status(200).json({
+        success: true,
+        message: "Employers retrieved successfully",
+        data: employers
+      });
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }}
+
 
 export const landingController = new LandingController();

@@ -112,4 +112,8 @@ app.delete("/advertisement",landingController.deleteAdvertisement) // id in body
 app.get("/advertisement",landingController.getAdvertisementById) //id in body
 
 
+app.post("/employer",landingController.postEmployer);
+app.get("/employer",landingController.getEmployer);
+
+
 export default app;
