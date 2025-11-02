@@ -113,7 +113,7 @@ app.get("/advertisement",landingController.getAdvertisementById) //id in body
 
 
 app.post("/employer",landingController.postEmployer);
-app.get("/employer",landingController.getEmployer);
+app.get("/employers",landingController.getEmployer);
 
 
 export default app;

@@ -1226,7 +1226,11 @@ class LandingController {
 
   async getEmployer(req: Request, res: Response) {
     try {
-      const employers = await prisma.employer.findMany();
+      const employers = await prisma.employer.findMany({
+        orderBy:{
+          createdAt:"desc"
+        }
+      });
       return res.status(200).json({
         success: true,
         message: "Employers retrieved successfully",
