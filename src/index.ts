@@ -16,6 +16,11 @@ const corsOptions = {
     "http://localhost:3000",
     "https://newsadik.vercel.app",
     "https://sadiksha.com.np",
+    "https://sadiksha.com.np/",
+    "https://sadiksha.com.np",
+    "https://www.sadiksha.com.np",
+    "https://www.sadiksha.com.np/",
+
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -28,14 +33,7 @@ app.options("*", cors(corsOptions));
 
 app.use(cookieParser());
 
-// ✅ Helmet can sometimes block cross-origin if not configured right
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginEmbedderPolicy: false, // add this line
-  })
-);
-
+ 
 // ✅ Apply CORS **after** helmet and before routes
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
