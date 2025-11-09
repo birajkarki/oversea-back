@@ -52,6 +52,8 @@ declare class LandingController {
     getAdvertisementById(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     register(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     login(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    postEmployer(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    getEmployer(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 export declare const landingController: LandingController;
 export {};

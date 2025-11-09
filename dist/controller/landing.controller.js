@@ -1054,6 +1054,51 @@ class LandingController {
             return;
         }
     }
+    async postEmployer(req, res) {
+        try {
+            const { companyName, contactPerson, email, phoneNumber, jobTitle, location, requirements, industry, urgency } = req.body;
+            const employer = await prisma_1.prisma.employer.create({
+                data: {
+                    companyName,
+                    contactPerson,
+                    email,
+                    phoneNumber,
+                    jobTitle,
+                    location,
+                    requirements,
+                    industry,
+                    urgency
+                }
+            });
+            return res.status(201).json({
+                success: true,
+                message: "Employer posted successfully",
+                data: employer
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return;
+        }
+    }
+    async getEmployer(req, res) {
+        try {
+            const employers = await prisma_1.prisma.employer.findMany({
+                orderBy: {
+                    createdAt: "desc"
+                }
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Employers retrieved successfully",
+                data: employers
+            });
+        }
+        catch (error) {
+            console.log(error);
+            return;
+        }
+    }
 }
 exports.landingController = new LandingController();
 //# sourceMappingURL=landing.controller.js.map

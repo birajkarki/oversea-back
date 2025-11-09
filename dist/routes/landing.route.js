@@ -64,5 +64,7 @@ app.get("/advertisement", landing_controller_1.landingController.getAllAdvertise
 app.post("/advertisement", multer_1.default.single("image"), landing_controller_1.landingController.postAdvertisement);
 app.delete("/advertisement", landing_controller_1.landingController.deleteAdvertisement);
 app.get("/advertisement", landing_controller_1.landingController.getAdvertisementById);
+app.post("/employer", landing_controller_1.landingController.postEmployer);
+app.get("/employers", landing_controller_1.landingController.getEmployer);
 exports.default = app;
 //# sourceMappingURL=landing.route.js.map
